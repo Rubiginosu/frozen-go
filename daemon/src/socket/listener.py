@@ -5,7 +5,8 @@ import socket
 # by Rubiginosu
 # powered by Axoford12
 # import socket lib
-
+import thread
+from processor import processThread
 HOST = ''
 PORT = 1212
 try:
@@ -23,4 +24,8 @@ except socket.error, msg:
 print 'Socket bind complete'
 
 s.listen(20) # Default listen to 20 client
+while True:
+    conn, addr = s.accept()
+    print 'Client connected with ' + addr[0] + ':' + str(addr[1])
+    thread.start_new_thread(processThread,(conn,))
 s.close()
