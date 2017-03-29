@@ -20,28 +20,30 @@ import (
 // 执行一个命令(底层)
 // command: 命令 如 docker
 // params: 参数(args)
-func ExecCommand(command string,params []string,c chan string) bool{
+func ExecCommand(command string,params []string,input chan string,output chan string) bool{
     cmd := exec.Command(command,params...)
-    
     stdout, err := cmd.StdoutPipe()// 获取输出流
     if err != nil {
         // 返回错误信息时结束程序
         return false
     }
-
     cmd.Start() // 开始运行
-    reader := bufio.NewReader(stdout)//获取reader
+    go procOutput(stdout,output)
+    cmd.Wait()
 
-    // 循环读取输出流
+    return true
+}
 
+// 处理输出流
+func procOutput(stdout io.ReadCloser,chl chan string){
+    reader := bufio.NewReader(stdout)//取得一个Reader
     for {
         line,err2 := reader.ReadString('\n')
-        if err2 != nil || err2 == io.EOF{
-            break // IO EOF或错误 离开循环
-
+        if err2 != nil || err2 == io.EOF {
+            close(chl)// 错误或EOF关闭管道
+            break
         }
-        c <- line // 将Line放入管道
+        chl <- line//写入到数据管道
     }
-    cmd.Wait()
-    return true
+    return
 }
