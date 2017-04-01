@@ -1,4 +1,16 @@
 /*
+ Org Rubiginosu
+ Team　Freeze
+ Author Axoford12
+  _____                        ____
+|  ___| __ ___ _______ _ __  / ___| ___
+| |_ | '__/ _ \_  / _ \ '_ \| |  _ / _ \
+|  _|| | | (_) / /  __/ | | | |_| | (_) |
+|_|  |_|  \___/___\___|_| |_|\____|\___/
+
+ */
+
+/*
 Note 包封装了打印信息的方法
  */
 package note
@@ -18,6 +30,6 @@ Display 封装了一个打印信息的方法
 func Display(typeOf string,content string){
 	timestamp := time.Now().Unix()
 	timeUnix := time.Unix(timestamp,0)
-	strTime := timeUnix.Format("2006-01-02 03:04:05 PM")
-	fmt.Println("FrozenGo : " + strTime + "[ " + typeOf + " ] " + content)
+	strTime := timeUnix.Format("01-02 03:04:05")
+	fmt.Println("FrozenGo:" + strTime + "[" + typeOf + "] " + content)
 }
