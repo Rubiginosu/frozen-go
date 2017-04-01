@@ -15,18 +15,30 @@
 package http
 
 import (
-	"fmt"
 	"net/http"
-	"strconv" // 加载配置文件库
+	"../../conf"
+	"../../note"
 )
 
 /*
  Listener 包含了对于http的监听器 基本处理器
  */
-func Listen(port int){
+func Listen(){
+	note.Display(note.TYPE_LOG,"Loading Conifg file...")
+	config := conf.SetConfig("../config/frozengo.ini")
 
-	err := http.ListenAndServe(":" + strconv.Itoa(port),nil)
+	note.Display(note.TYPE_LOG,"Loaded Config")
+	port := config.GetValue("http","port")
+	if port == "no value" {
+		note.Display(note.TYPE_NOTICE,"No port infomation found ,use 52125")
+		port =  "51215" // Love Girl.
+	} else {
+		note.Display(note.TYPE_DEBUG,"Port Founded , port:" + port + ".")
+	}
+	err := http.ListenAndServe(":" + port,nil)
 	if err != nil {
-		fmt.Println("Listen and Serve error: ",err)
+		note.Display(note.TYPE_ERROR,"Cannot listen to port " + port)
+	} else {
+		note.Display(note.TYPE_DEBUG,"Listened port.")
 	}
 }

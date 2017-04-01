@@ -1,193 +1,147 @@
-/*
-Conf包主要负责配置文件的读写
-Axoford12
-Rubiginosu
-  _____                        ____
-|  ___| __ ___ _______ _ __  / ___| ___
-| |_ | '__/ _ \_  / _ \ '_ \| |  _ / _ \
-|  _|| | | (_) / /  __/ | | | |_| | (_) |
-|_|  |_|  \___/___\___|_| |_|\____|\___/
-
- */
 package conf
 
 import (
 	"bufio"
-	"bytes"
-	"errors"
 	"fmt"
 	"io"
 	"os"
-	"strconv"
 	"strings"
-	"sync"
 )
-
-var (
-	DEFAULT_SECTION = "FrozenGo" // 默认配置section
-	DEFAULT_COMMENT = []byte{'#'} // 注释符号 # ;
-	DEFAULT_COMMENT_SEM = []byte{';'}
-)
-
-type ConfigInterface interface {
-	String(key string) string
-	Strings(key string) []string
-	Bool(key string) (bool, error)
-	Int(key string) (int, error)
-	Int64(key string) (int64, error)
-	Float64(key string) (float64, error)
-	Set(key string, value string) error
-}
 
 type Config struct {
-	sync.RWMutex
-	data map[string]map[string]string
-
+	filepath string                         //your ini file path directory+file
+	conflist []map[string]map[string]string //configuration information slice
 }
 
-// 加载一个配置文件
-func LoadConfig(confName string) (ConfigInterface, error) {
-	c := &Config{
-		data: make(map[string]map[string]string),
-	}
-	err := c.parse(confName)
-	return c, err
+//Create an empty configuration file
+func SetConfig(filepath string) *Config {
+	c := new(Config)
+	c.filepath = filepath
+
+	return c
 }
-// 以键值对的形式添加到配置
-func (c *Config) AddConfig(section string, option string, value string) bool {
-	if section == "" {
-		section = DEFAULT_SECTION
-	}
 
-	if _, ok := c.data[section]; !ok {
-		c.data[section] = make(map[string]string)
-	}
-
-	_, ok := c.data[section][option]
-	c.data[section][option] = value
-
-	return !ok
-}
-//
-func (c *Config) parse(fname string) (err error) {
-	c.Lock()
-	f, err := os.Open(fname)
-	if err != nil {
-		return err
-	}
-	defer c.Unlock()// 解锁文件
-	defer f.Close()// 关流
-
-	buf := bufio.NewReader(f)
-
-	var section string
-	var lineNum int
-
-	for {
-		lineNum++
-		line, _, err := buf.ReadLine()
-		if err == io.EOF {
-			break
-		} else if bytes.Equal(line, []byte{}) {
-			continue
-		} else if err != nil {
-			return err
-		}
-
-		line = bytes.TrimSpace(line) // 去掉空格
-		switch {
-		case bytes.HasPrefix(line, DEFAULT_COMMENT):
-			continue
-		case bytes.HasPrefix(line,DEFAULT_COMMENT_SEM):
-			continue
-		case bytes.HasPrefix(line, []byte{'['}) && bytes.HasSuffix(line, []byte{']'}):
-			section = string(line[1 : len(line)-1])
-		default:
-			optionVal := bytes.SplitN(line, []byte{'='}, 2)
-			if len(optionVal) != 2 {
-				return fmt.Errorf("parse %s the content error : line %d , %s = ? ", fname, lineNum, optionVal[0])
+//To obtain corresponding value of the key values
+func (c *Config) GetValue(section, name string) string {
+	c.ReadList()
+	conf := c.ReadList()
+	for _, v := range conf {
+		for key, value := range v {
+			if key == section {
+				return value[name]
 			}
-			option := bytes.TrimSpace(optionVal[0])
-			value := bytes.TrimSpace(optionVal[1])
-			c.AddConfig(section, string(option), string(value))
 		}
 	}
-
-	return nil
+	return "no value"
 }
 
-func (c *Config) Bool(key string) (bool, error) {
-	return strconv.ParseBool(c.get(key))
-}
-
-func (c *Config) Int(key string) (int, error) {
-	return strconv.Atoi(c.get(key))
-}
-
-func (c *Config) Int64(key string) (int64, error) {
-	return strconv.ParseInt(c.get(key), 10, 64)
-}
-
-func (c *Config) Float64(key string) (float64, error) {
-	return strconv.ParseFloat(c.get(key), 64)
-}
-
-func (c *Config) String(key string) string {
-	return c.get(key)
-}
-
-func (c *Config) Strings(key string) []string {
-	v := c.get(key)
-	if v == "" {
-		return nil
-	}
-	return strings.Split(v, ",")
-}
-
-func (c *Config) Set(key string, value string) error {
-	c.Lock()
-	defer c.Unlock()
-	if len(key) == 0 {
-		return errors.New("key is empty.")
+//Set the corresponding value of the key value, if not add, if there is a key change
+func (c *Config) SetValue(section, key, value string) bool {
+	c.ReadList()
+	data := c.conflist
+	var ok bool
+	var index = make(map[int]bool)
+	var conf = make(map[string]map[string]string)
+	for i, v := range data {
+		_, ok = v[section]
+		index[i] = ok
 	}
 
-	var (
-		section string
-		option  string
-	)
+	i, ok := func(m map[int]bool) (i int, v bool) {
+		for i, v := range m {
+			if v == true {
+				return i, true
+			}
+		}
+		return 0, false
+	}(index)
 
-	keys := strings.Split(strings.ToLower(key), "::")
-	if len(keys) >= 2 {
-		section = keys[0]
-		option = keys[1]
+	if ok {
+		c.conflist[i][section][key] = value
+		return true
 	} else {
-		option = keys[0]
+		conf[section] = make(map[string]string)
+		conf[section][key] = value
+		c.conflist = append(c.conflist, conf)
+		return true
 	}
 
-	c.AddConfig(section, option, value)
-	return nil
+	return false
 }
 
-// 获得一个对于键值对的字符串
-func (c *Config) get(key string) string {
-	var (
-		section string
-		option  string
-	)
+//Delete the corresponding key values
+func (c *Config) DeleteValue(section, name string) bool {
+	c.ReadList()
+	data := c.conflist
+	for i, v := range data {
+		for key, _ := range v {
+			if key == section {
+				delete(c.conflist[i][key], name)
+				return true
+			}
+		}
+	}
+	return false
+}
 
-	keys := strings.Split(strings.ToLower(key), "::") // 分隔
+//List all the configuration file
+func (c *Config) ReadList() []map[string]map[string]string {
 
-	if len(keys) >= 2 {
-		section = keys[0]
-		option = keys[1]
-	} else {
-		section = DEFAULT_SECTION
-		option = keys[0]
+	file, err := os.Open(c.filepath)
+	if err != nil {
+		CheckErr(err)
+	}
+	defer file.Close()
+	var data map[string]map[string]string
+	var section string
+	buf := bufio.NewReader(file)
+	for {
+		l, err := buf.ReadString('\n')
+		line := strings.TrimSpace(l)
+		if err != nil {
+			if err != io.EOF {
+				CheckErr(err)
+			}
+			if len(line) == 0 {
+				break
+			}
+		}
+		switch {
+		case len(line) == 0:
+		case string(line[0]) == "#":	//增加配置文件备注
+		case line[0] == '[' && line[len(line)-1] == ']':
+			section = strings.TrimSpace(line[1 : len(line)-1])
+			data = make(map[string]map[string]string)
+			data[section] = make(map[string]string)
+		default:
+			i := strings.IndexAny(line, "=")
+			value := strings.TrimSpace(line[i+1 : len(line)])
+			data[section][strings.TrimSpace(line[0:i])] = value
+			if c.uniquappend(section) == true {
+				c.conflist = append(c.conflist, data)
+			}
+		}
+
 	}
 
-	if value, ok := c.data[section][option]; ok {
-		return value
-	}
+	return c.conflist
+}
 
-	return ""
+func CheckErr(err error) string {
+	if err != nil {
+		return fmt.Sprintf("Error is :'%s'", err.Error())
+	}
+	return "Notfound this error"
+}
+
+//Ban repeated appended to the slice method
+func (c *Config) uniquappend(conf string) bool {
+	for _, v := range c.conflist {
+		for k, _ := range v {
+			if k == conf {
+				return false
+			}
+		}
+	}
+	return true
 }
