@@ -14,6 +14,7 @@ import (
     "bufio"
     "io"
     "os/exec"
+    "error"
 )
 // 导入IO标准库
 // 暂时实现实时输出
@@ -27,6 +28,8 @@ func ExecCommand(command string,params []string,input chan string,output chan st
         // 返回错误信息时结束程序
         return false
     }
+    sdtin,err := cmd.StdinPipe()
+    error.ProcErr(err)
     cmd.Start() // 开始运行
     go procOutput(stdout,output)
     cmd.Wait()
@@ -46,4 +49,11 @@ func procOutput(stdout io.ReadCloser,chl chan string){
         chl <- line//写入到数据管道
     }
     return
+}
+// 处理输入流
+func procInput(stdin io.WriteCloser,chl chan []byte){
+    writer := bufio.NewWriter(stdin)
+    for data := range chl {
+        writer.Write(data)
+    }
 }
