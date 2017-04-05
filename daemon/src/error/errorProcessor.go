@@ -8,7 +8,10 @@ import(
 	"os"
 )
 // 处理一般错误并进行打印
-func ProcErr(err error){
-	note.Display(note.TYPE_ERROR,err.Error())
-	os.Exit(2)
+func ProcErr(err error,info string){
+	if err != nil {
+		note.Display(note.TYPE_ERROR,err.Error())
+		os.Exit(2)
+	}
+
 }
