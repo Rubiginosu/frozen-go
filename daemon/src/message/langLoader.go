@@ -15,7 +15,6 @@ package message
 import (
 	"os"
 	"conf"
-	"net/http"
 )
 
 const PATH_RESOURCE_PACK string = "../recourcePack/lang"
