@@ -20,10 +20,11 @@ const LANG_CN string = "chinese"
 
 const DEFAULT_REPLACING string = "%FreezeDefault%"
 var languages map[string]map[string]string = map[string]map[string]string{
-	"chinese" : chinese,
 
 }
-
+var messages []string = []string{
+	"FrozenGo daemon starting",
+}
 // 获取一个消息
 func GetMessage(language ,log string,replacing map[string]string) string{
 
