@@ -21,7 +21,7 @@ import (
 const PATH_RESOURCE_PACK string = "../recourcePack/lang"
 const DEFAULT_SECTION string = "Frozeno"
 const SECTION_LANG_DECORATE string = "langDecorte"
-
+const SECTION_TRAMSLATIONS string = "translations"
 // 用于返回一个map集合表示语言
 func LoaderLang() {
 
@@ -44,7 +44,7 @@ func read(file os.FileInfo) (name string,lang map[string]string){
 
 		langContent := map[string]string{}
 		for _,v := range messages{
-			langContent[v] = config.GetValue(SECTION_LANG_DECORATE,v)
+			langContent[v] = config.GetValue(SECTION_TRAMSLATIONS,v)
 		}
 		return languageName,langContent
 	}
