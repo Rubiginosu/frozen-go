@@ -16,7 +16,6 @@ import (
 	"os"
 	"conf"
 	"error"
-	"fmt"
 )
 
 const DEFAULT_SECTION string = "FrozenGo"
@@ -26,7 +25,6 @@ const SECTION_TRANSLATIONS string = "translations"
 func LoaderLang(languagePath,name string) {
 	languagePath = "../" + languagePath
 	directory, _ := os.Open(languagePath)
-	fmt.Println(languagePath)
 	files, err := directory.Readdir(0)
 	error.ProcErr(err,"")
 	for _, file := range files {

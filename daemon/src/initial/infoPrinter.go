@@ -34,8 +34,9 @@ func printInfo() {
 		fmt.Print(string(v))
 	}
 	fmt.Println()
-	time.Sleep(300 * time.Millisecond)
+	time.Sleep(1000 * time.Millisecond)
 	time.Sleep(100 * time.Microsecond)
 	fmt.Println("---------------------")
+	time.Sleep(300 * time.Millisecond)
 	fmt.Println("version:" + VERSION)
 }
