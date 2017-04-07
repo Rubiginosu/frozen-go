@@ -18,6 +18,8 @@ package note
 import (
 	"fmt"
 	"time"
+	"message"
+	"conf"
 )
 const TYPE_LOG string = "LOG"
 const TYPE_DEBUG string = "DEBUG"
@@ -27,9 +29,11 @@ const TYPE_ERROR string = "ERROR"
 /*
 Display 封装了一个打印信息的方法
  */
-func Display(typeOf string,content string){
+func Display(typeOf string,content string,replacing map[string]string){
 	timestamp := time.Now().Unix()
 	timeUnix := time.Unix(timestamp,0)
 	strTime := timeUnix.Format("01-02 03:04:05")
+	languageName := conf.SetConfig(FILE_CONFIGURATION).GetValue("lang","language")
+	content = message.GetMessage(languageName,content,replacing)
 	fmt.Println("FrozenGo:" + strTime + "[" + typeOf + "] " + content)
 }

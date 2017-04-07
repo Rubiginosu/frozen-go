@@ -15,36 +15,37 @@ package message
 import (
 	"os"
 	"conf"
+	"fmt"
+	"error"
+	"note"
 )
 
-const PATH_RESOURCE_PACK string = "../recourcePack/lang"
-const DEFAULT_SECTION string = "Frozeno"
-const SECTION_LANG_DECORATE string = "langDecorte"
-const SECTION_TRAMSLATIONS string = "translations"
-// 用于返回一个map集合表示语言
-func LoaderLang() {
+const DEFAULT_SECTION string = "FrozenGo"
+const SECTION_TRANSLATIONS string = "translations"
 
-	directory, _ := os.Open(PATH_RESOURCE_PACK)
-	files, _ := directory.Readdir(0)
+// 用于返回一个map集合表示语言
+func LoaderLang(languagePath,name string) {
+	languagePath = "../" + languagePath
+	directory, _ := os.Open(languagePath)
+	fmt.Println(languagePath)
+	files, err := directory.Readdir(0)
+	error.ProcErr(err,"")
 	for _, file := range files {
-		if !file.IsDir(){
-			name,content := read(file)
-			languages[name] = content
+		if file.Name() == (name + ".ini") {
+			langTranslations := read(languagePath + file.Name())
+			languages[name] = langTranslations
+		} else {
+			note.Display(note.TYPE_ERROR,"Cannot get file:" + languagePath + file.Name() + ".ini")
 		}
 	}
 }
 
-func read(file os.FileInfo) (name string,lang map[string]string){
-	config := conf.SetConfig(file.Name())
-	if config.GetValue(DEFAULT_SECTION,"type") != "lang" {
-		return "",nil
+func read(file string) (lang map[string]string){
+	config := conf.SetConfig(file)
+	if config.GetValue(DEFAULT_SECTION,"type") != "langPack" {
+		return nil
 	} else {
-		languageName := config.GetValue(SECTION_LANG_DECORATE, "name")
-
-		langContent := map[string]string{}
-		for _,v := range messages{
-			langContent[v] = config.GetValue(SECTION_TRAMSLATIONS,v)
-		}
-		return languageName,langContent
+		langTranslations := config.ReadList()[2][SECTION_TRANSLATIONS] // 获取翻译的Map集合
+		return langTranslations
 	}
 }

@@ -16,21 +16,13 @@ import (
 	"regexp"
 	"strings"
 )
-const LANG_CN string = "chinese"
-
-const DEFAULT_REPLACING string = "%FreezeDefault%"
 var languages map[string]map[string]string = map[string]map[string]string{
 
 }
-var messages []string = []string{
-	"FrozenGo daemon starting",
-}
 // 获取一个消息
-func GetMessage(language ,log string,replacing map[string]string) string{
+func GetMessage(languageName,log string,replacing map[string]string) string{
 
-	langPackage := languages[language]
-
-	if log,ok := langPackage[log]; ok {
+	if log,ok := languages[languageName][log]; ok {
 		return processReplacing(log,replacing)
 	} else {
 		return log
@@ -38,10 +30,10 @@ func GetMessage(language ,log string,replacing map[string]string) string{
 }
 // 处理一次占位符替换
 func processReplacing(log string,replacing map[string]string) string{
-	reg,_ := regexp.Compile("rc.+?rc")
+	reg,_ := regexp.Compile("%.+?%")
 	for _,content := range reg.FindAllString(log,-1){
-		replaceString := strings.Trim(content,"rc")// 去掉RC标记
-		if replacer,ok := replacing[replaceString]; ok && replaceString != DEFAULT_REPLACING{
+		replaceString := strings.Trim(content,"%")// 去掉RC标记
+		if replacer,ok := replacing[replaceString]; ok{
 			log = strings.Replace(log,content,replacer,-1)// 不为默认值且有替换值则进行替换
 		} else {
 			log = strings.Replace(log,content,replaceString,-1)// 没有默认值或没替换值去掉rc即可

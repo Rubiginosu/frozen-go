@@ -10,7 +10,7 @@ import(
 // 处理一般错误并进行打印
 func ProcErr(err error,info string){
 	if err != nil {
-		note.Display(note.TYPE_ERROR,err.Error())
+		note.Display(note.TYPE_ERROR,err.Error() + info)
 		os.Exit(2)
 	}
 
