@@ -21,11 +21,10 @@ var languages map[string]map[string]string = map[string]map[string]string{
 }
 // 获取一个消息
 func GetMessage(languageName,log string,replacing map[string]string) string{
-
-	if log,ok := languages[languageName][log]; ok {
+	if logging,ok := languages[languageName][log]; ok { // 语言包找到
+		return processReplacing(logging,replacing)
+	} else { // 语言包没找到
 		return processReplacing(log,replacing)
-	} else {
-		return log
 	}
 }
 // 处理一次占位符替换

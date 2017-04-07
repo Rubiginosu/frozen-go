@@ -15,9 +15,8 @@ package message
 import (
 	"os"
 	"conf"
-	"fmt"
 	"error"
-	"note"
+	"fmt"
 )
 
 const DEFAULT_SECTION string = "FrozenGo"
@@ -34,8 +33,6 @@ func LoaderLang(languagePath,name string) {
 		if file.Name() == (name + ".ini") {
 			langTranslations := read(languagePath + file.Name())
 			languages[name] = langTranslations
-		} else {
-			note.Display(note.TYPE_ERROR,"Cannot get file:" + languagePath + file.Name() + ".ini")
 		}
 	}
 }

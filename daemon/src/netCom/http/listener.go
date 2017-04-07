@@ -16,8 +16,6 @@ package http
 
 import (
 	"net/http"
-	"../../conf"
-	"../../note"
 	"fmt"
 	"unsafe"
 	"reflect"
@@ -26,28 +24,30 @@ import (
 	"crypto/x509"
 	"crypto/rsa"
 	"crypto/rand"
+	"note"
+	"conf"
 )
 
 /*
  Listener 包含了对于http的监听器 基本处理器
  */
 func Listen(){
-	note.Display(note.TYPE_LOG,"Loading Conifg file...")
+	note.Display(note.TYPE_LOG,"Loading Conifg file...",nil)
 	config := conf.SetConfig("../config/frozengo.ini")
 	http.HandleFunc("/token.gateway",processToken)
-	note.Display(note.TYPE_LOG,"Loaded Config")
+	note.Display(note.TYPE_LOG,"Loaded Config",nil)
 	port := config.GetValue("http","port")
 	if port == "no value" {
-		note.Display(note.TYPE_NOTICE,"No port infomation found ,use 52125")
+		note.Display(note.TYPE_NOTICE,"No port infomation found ,use 52123",nil)
 		port =  "51215" // Love Girl.
 	} else {
-		note.Display(note.TYPE_DEBUG,"Port Founded , port:" + port + ".")
+		note.Display(note.TYPE_DEBUG,"Port Founded , port:%port%",map[string]string{"port":port})
 	}
 	err := http.ListenAndServe(":" + port,nil)
 	if err != nil {
-		note.Display(note.TYPE_ERROR,"Cannot listen to port " + port)
+		note.Display(note.TYPE_ERROR,"Cannot listen to port:%port% ",map[string]string{"port":port})
 	} else {
-		note.Display(note.TYPE_DEBUG,"Listened port.")
+		note.Display(note.TYPE_DEBUG,"Listened port.",nil)
 	}
 }
 /*
@@ -59,15 +59,15 @@ func processToken(w http.ResponseWriter, r *http.Request){
 
 	if publicKey == nil{
 		// 没有收到 public key
-		note.Display(note.TYPE_LOG,"HTTP Request Found .Cannot find publickey in POST or GET")
+		note.Display(note.TYPE_LOG,"HTTP Request Found .Cannot find publickey in POST or GET",nil)
 
 	} else {
-		note.Display(note.TYPE_NOTICE,"HTTP Request vailed.")
+		note.Display(note.TYPE_NOTICE,"HTTP Request vailed.",nil)
 		token := Krand(20)
-		note.Display(note.TYPE_NOTICE,"New Client generated" + ByteToString(token))
+		note.Display(note.TYPE_NOTICE,"New Client generated" + ByteToString(token),nil)
 		encrypted,err := RsaEncrypt(StringToByte(&(publicKey[0])),token)
 		if err != nil {
-			note.Display(note.TYPE_ERROR,"Encrypt failed")
+			note.Display(note.TYPE_ERROR,"Encrypt failed",nil)
 			fmt.Fprintf(w, "Encrypt Failded")
 		} else {
 			fmt.Fprintf(w, ByteToString(encrypted))
