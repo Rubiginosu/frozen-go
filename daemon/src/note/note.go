@@ -22,6 +22,7 @@ import (
 	"conf"
 	"initial"
 )
+
 const TYPE_LOG string = "LOG"
 const TYPE_DEBUG string = "DEBUG"
 const TYPE_NOTICE string = "NOTICE"

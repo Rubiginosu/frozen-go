@@ -15,7 +15,8 @@ package message
 import (
 	"os"
 	"conf"
-	"error"
+	"fmt"
+	"time"
 )
 
 const DEFAULT_SECTION string = "FrozenGo"
@@ -26,7 +27,12 @@ func LoaderLang(languagePath,name string) {
 	languagePath = "../" + languagePath
 	directory, _ := os.Open(languagePath)
 	files, err := directory.Readdir(0)
-	error.ProcErr(err,"")
+	if err != nil{
+		// 文件名不存在
+		fmt.Println("Cannot get file")
+		time.Sleep(5 * time.Second)
+		os.Exit(0)
+	}
 	for _, file := range files {
 		if file.Name() == (name + ".ini") {
 			langTranslations := read(languagePath + file.Name())

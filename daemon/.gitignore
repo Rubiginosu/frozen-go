@@ -1,4 +1,4 @@
 # bin directory
 /bin
 # JetBrains
-/.idea
+/.idea/*
