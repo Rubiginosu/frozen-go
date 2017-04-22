@@ -20,13 +20,13 @@ package activeDatebase
 
 import(
 	"gopkg.in/mgo.v2"
-	"error"
+	"errProc"
 )
 
 // 数据库链接，用于连接到MongoDB数据库
 func databaseConnector(connInfo *connectionInfo) *mgo.Database{
 	session,err := mgo.Dial(connInfo.DatabaseUrl)
-	error.ProcErr(err,"Cannot connect to database:%databaseUrl%",map[string]string{
+	errProc.ProcErr(err,"Cannot connect to database:%databaseUrl%",map[string]string{
 		"databaseUrl" : connInfo.DatabaseUrl,
 	})
 	defer session.Close()

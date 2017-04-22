@@ -2,7 +2,7 @@ package activeDatebase
 
 import (
 	"gopkg.in/mgo.v2"
-	"error"
+	"errProc"
 )
 
 func listServers(database mgo.Database) []server{
@@ -16,5 +16,5 @@ func listServers(database mgo.Database) []server{
 func insertServer(database *mgo.Database,server *server) {
 	collection := database.C(COLLECTION_SERER)
 	err := collection.Insert(server)
-	error.ProcErr(err,"Cannot insert server to collection..",nil)
+	errProc.ProcErr(err,"Cannot insert server to collection..",nil)
 }
