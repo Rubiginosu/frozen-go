@@ -1,19 +1,25 @@
-# frozen-go
-A minecraft server manager program .This program is powered by Rubiginosu team. FrozenGo is a software which is used to manage your minecraft server.
-1) Whats this    
-    FrozenGo is a software to manage and sell minecraft server Easily,
-    You can use this free software to sell minecraft server.
-2) How to install    
-    This software is developing now,if you want to test or send bug infomation to us,
-    You can contact us on Internet,Email at postmaster@axoford12.cn
-3) Ideas of us   
-    We are very proud of developing this software.
-    We hope that someone can use our code to make more creativities.
-4) License   
-    FrozenGo is a open-source software.
-    You can use it for free.
-    Licensed under MIT.
-5) In the end   
-    Minecraft is a very awesome game that we all love it,
-    so we hope that it will be better and better in the future.
-    Thanks to you all.
+# FrozenGo
+---
+一个简单的Minecraft管理系统，包括自动售卖，服务器管理等等功能，类似于国外Multucraft，软件使用MIT开源，请使用者遵守MIT开源协议。作者仅想刷刷存在感
+
+## 1. 简要 
+    > FrozenGo是一款服务器管理软件，我们觉得国内还是应该有一个自己的面板
+    我们不比欧洲人差什么，没必要研究破解一个收费软件。
+## 2. 安装 
+    > 本软件正在开发中，若有好孩纸资瓷本软件请联系847072154(QQ。
+    
+## 3. 情怀 
+    > 鉴于MC市场非常之乱，倒卖服务器的小学生非常多，我们希望能够清理一番环境
+    给大家一个曾经的MC 。 毕竟MC这个游戏我也是从0.8 1.5时代走来的。
+    追了这么多年，明白这是一个伟大的游戏，看到了它的优秀。在我本人
+    即将退出MC界的最后的最后，给Minecraf一个礼物
+    
+## 4. 授权    
+    > 本软件免费，我们仅仅保留一些基本的作者权利，其余关于代码修改等请自行发挥
+    我们想为中国客观培养一些创新型人才，我是中国人
+## 5. 感想  
+    > MC这个游戏，我非常喜欢，也看了她的茁壮成长，看了她的优秀。
+    为什么要开源？虽然我有时候觉得，自己辛辛苦苦写个软件给别人赚钱。。
+    挺伤感的。但是，我还是相信，中国需要创新的程序员，而不是想办法
+    破解别人收费软件，践踏别人心血的Cracker ，我们完全有能力自己做，
+    完全有能力把这件事做到最好。
