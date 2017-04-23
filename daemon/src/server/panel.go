@@ -13,13 +13,17 @@ package server
 
 import(
     "initial"
+    "encoding/json"
+    "fmt"
+    "net/http"
 )
 // 验证panel
 func auth(hashCode string) bool {
     // TODO 实现验证方法
+    return true
 }
 
-type Amswer struct {
+type Answer struct {
     Success bool
     Error string
     Data string
@@ -28,21 +32,21 @@ type Amswer struct {
 func getVersion(w http.ResponseWriter,r *http.Request){
     version := initial.VERSION
     r.ParseForm()
-    auth := r.Form['auth'][0]
-    var answer answer
-    if auth(auth) {
+    authHashCode := r.Form["auth"][0]
+    var answer Answer
+    if auth(authHashCode) {
         // 验证成功
         answer.Success = true
         answer.Error = ""
         answer.Data = version
     } else {
-    
         authInvalid(&answer)
     }
-    
+    bs ,_ := json.Marshal(answer)
+    fmt.Fprint(w,string(bs))
 }
 
-func authInvalid(answer *Amswer){
+func authInvalid(answer *Answer){
     answer.Success = false
     answer.Error = "Auth faild"
     answer.Data = ""

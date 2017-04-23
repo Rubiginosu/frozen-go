@@ -19,11 +19,11 @@ Org Rubiginosu
  )
  // 开启服务器
  func StartServer(){
-
+    startPanelServ(":52123")
  }
  func startPanelServ(port string){
      // 打印开启信息
-     note.Display(note.LOG,"Starting panel server")
+     note.Display(note.TYPE_DEBUG,"Starting panel server",nil)
+     http.HandleFunc("/Api.Version",getVersion)
      http.ListenAndServe(port,nil) // 开始监听
-
  }
