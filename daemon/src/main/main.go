@@ -3,9 +3,10 @@ package main
 import (
 	"initial"
     "server"
+	"scheduler"
 )
 func main(){
 	initial.InitProgram()
-    server.StartServer()
+    	scheduler := scheduler.StartScheduler()
 }
 

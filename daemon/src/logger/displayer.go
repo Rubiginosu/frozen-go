@@ -13,7 +13,7 @@
 /*
 Note 包封装了打印信息的方法
  */
-package note
+package logger
 
 import (
 	"fmt"

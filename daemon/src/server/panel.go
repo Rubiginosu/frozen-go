@@ -32,9 +32,8 @@ type Answer struct {
 func getVersion(w http.ResponseWriter,r *http.Request){
     version := initial.VERSION
     r.ParseForm()
-    authHashCode := r.Form["auth"][0]
     var answer Answer
-    if auth(authHashCode) {
+    if auth(getAuthHashCode(r)) {
         // 验证成功
         answer.Success = true
         answer.Error = ""
@@ -44,6 +43,10 @@ func getVersion(w http.ResponseWriter,r *http.Request){
     }
     bs ,_ := json.Marshal(answer)
     fmt.Fprint(w,string(bs))
+}
+
+func getAuthHashCode(r *http.Request) string{
+    return r.Form["auth"][0]
 }
 
 func authInvalid(answer *Answer){

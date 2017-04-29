@@ -15,7 +15,7 @@ Org Rubiginosu
  // 监听器，逻辑API处理等操作
  import (
      "net/http"
-     "note"
+     "logger"
  )
  // 开启服务器
  func StartServer(){
@@ -23,7 +23,7 @@ Org Rubiginosu
  }
  func startPanelServ(port string){
      // 打印开启信息
-     note.Display(note.TYPE_DEBUG,"Starting panel server",nil)
+     logger.Display(logger.TYPE_DEBUG,"Starting panel server",nil)
      http.HandleFunc("/Api.Version",getVersion)
      http.ListenAndServe(port,nil) // 开始监听
  }
