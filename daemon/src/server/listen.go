@@ -10,20 +10,25 @@ Org Rubiginosu
 
  */
 
- package server
- // Server目录包含了
- // 监听器，逻辑API处理等操作
- import (
-     "net/http"
-     "logger"
- )
- // 开启服务器
- func StartServer(){
-    startPanelServ(":52123")
- }
- func startPanelServ(port string){
-     // 打印开启信息
-     logger.Display(logger.TYPE_DEBUG,"Starting panel server",nil)
-     http.HandleFunc("/Api.Version",getVersion)
-     http.ListenAndServe(port,nil) // 开始监听
- }
+package server
+
+// Server目录包含了
+// 监听器，逻辑API处理等操作
+import (
+	"net/http"
+	"logger"
+	"scheduler"
+)
+
+// 开启服务器
+func StartServer() {
+	port := scheduler.StartScheduler().GetConfig().GetValue("server","port")
+	port = ":" + port
+	startPanelServ(port)
+}
+func startPanelServ(port string) {
+	// 打印开启信息
+	logger.Display(logger.TYPE_DEBUG, "Starting panel server", nil)
+	http.HandleFunc("/Api.Version", getVersion)
+	http.ListenAndServe(port, nil) // 开始监听
+}

@@ -7,6 +7,6 @@ import (
 )
 func main(){
 	initial.InitProgram()
-    	scheduler := scheduler.StartScheduler()
+    	scheduler.StartScheduler()
 }
 

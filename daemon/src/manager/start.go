@@ -13,10 +13,16 @@ Org Rubiginosu
 // 对服务器进行管理的一个程序模块
 package manager
 
+type Server struct {
+	Name  string
+	Owner string
+	Path  string
+	ID    int
+}
 type ServerManager struct {
-
+	servers map[string]Server
 }
 
-func Start(){
+func Start() {
 
 }

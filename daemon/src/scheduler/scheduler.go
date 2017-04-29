@@ -20,27 +20,50 @@ package scheduler
 import (
 	"manager"
 	"server"
+	"conf"
 )
 
 
 var serverManager *manager.ServerManager
-var scheduler CentralScheduler
-
+var schedule CentralScheduler
+var config *Configure
 type CentralScheduler struct {
-
+	Event EventScheduler
 }
+
+type  Configure struct {
+	Config []map[string]map[string]string
+}
+
 
 func StartScheduler() *CentralScheduler{
 	startServer()
-	scheduler = CentralScheduler{}
-	return &scheduler
+	loadConfig()
+	schedule = CentralScheduler{}
+	return &schedule
 }
-func (*CentralScheduler)GetServerManager() *manager.ServerManager {
+
+
+func GetScheduler() *CentralScheduler{
+	return &schedule
+}
+
+// Get ServerManager
+func (c *CentralScheduler)GetServerManager() *manager.ServerManager {
 	return serverManager
 }
+
+//  start Server listen to a certain port
 func startServer(){
 	server.StartServer()
 }
-func getScheduler() *CentralScheduler{
-	return &scheduler
+
+//
+func loadConfig(){
+	config.Config = conf.SetConfig("../config/frozengo.conf").ReadList()
+}
+
+
+func (c *CentralScheduler)GetConfig() *Configure{
+	return config
 }
