@@ -17,14 +17,11 @@ package server
 import (
 	"net/http"
 	"logger"
-	"scheduler"
 )
 
 // 开启服务器
 func StartServer() {
-	port := scheduler.StartScheduler().GetConfig().GetValue("server","port")
-	port = ":" + port
-	startPanelServ(port)
+    startPanelServ(":52123")
 }
 func startPanelServ(port string) {
 	// 打印开启信息
