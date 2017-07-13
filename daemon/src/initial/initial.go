@@ -21,6 +21,7 @@ import (
 	"time"
 	"os"
 	"serverManager"
+	"encoding/json"
 )
 
 const VERSION string = "v0.0"
@@ -35,15 +36,19 @@ func main(){
 	if !pathExists(FILE_CONFIGURATION)	{
 		conf.GenerateConfig(FILE_CONFIGURATION)
 	}
+	config,_ := conf.GetConfig(FILE_CONFIGURATION)
 	go serverManager.ManagerStart(serverManagerChan)
 	if <-serverManagerChan == "OK"{
 		fmt.Println("ServerManager Thread has started")
 	}
-	// Test
-	serverManagerChan <- "Create"
-	serverManagerChan <- "ASDASD"
-	serverManagerChan <- "List"
-	fmt.Println(<- serverManagerChan)
+	b,_ := json.Marshal(config)
+	serverManagerChan <- string(b)
+	//serverManagerChan <- "Create"
+	//serverManagerChan <- "AVS"
+}
+
+func saveServersInfo(ch chan string){
+	ch <- "List"
 }
 
 

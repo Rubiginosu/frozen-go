@@ -6,7 +6,7 @@ import (
 	"io/ioutil"
 )
 
-type config struct {
+type Config struct {
 	Smc  serverManagerConfig
 	Lang languageConfig
 }
@@ -19,15 +19,15 @@ type languageConfig struct {
 	langPath string
 }
 
-func GetConfig(filename string) (config, error) {
+func GetConfig(filename string) (Config, error) {
 	file, err := os.Open(filename)
 	if err != nil {
-		return config{}, err
+		return Config{}, err
 	}
-	var v config
+	var v Config
 	b, err2 := ioutil.ReadAll(file)
 	if err2 != nil {
-		return config{}, err2
+		return Config{}, err2
 	}
 	json.Unmarshal(b, &v)
 	return v,nil
@@ -40,7 +40,7 @@ func GenerateConfig(filepath string) error{
 	if err != nil {
 		return err
 	}
-	var v config = config{
+	var v Config = Config{
 		serverManagerConfig{"data/servers"},
 		languageConfig{"spk/lang/chinese.ini"},
 	}
