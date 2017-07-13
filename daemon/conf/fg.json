@@ -1,1 +1,6 @@
-{"Smc":{"Servers":"data/servers"},"Lang":{}}
+{
+  "Smc": {
+    "Servers": "../data/servers.json"
+  },
+  "Lang": {}
+}

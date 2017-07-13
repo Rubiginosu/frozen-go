@@ -41,10 +41,10 @@ func GenerateConfig(filepath string) error{
 		return err
 	}
 	var v Config = Config{
-		serverManagerConfig{"data/servers"},
+		serverManagerConfig{"data/servers.json"},
 		languageConfig{"spk/lang/chinese.ini"},
 	}
-	s,_ := json.Marshal(v)
+	s,_ := json.MarshalIndent(v,"","\t")
 	file.Write(s)
 
 	return nil

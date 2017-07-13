@@ -33,9 +33,7 @@ func main(){
 	if !(len(os.Args) > 1 && os.Args[1] == "-jump"){
 		printInfo()
 	}
-	if !pathExists(FILE_CONFIGURATION)	{
-		conf.GenerateConfig(FILE_CONFIGURATION)
-	}
+	//conf.GenerateConfig(FILE_CONFIGURATION)
 	config,_ := conf.GetConfig(FILE_CONFIGURATION)
 	go serverManager.ManagerStart(serverManagerChan)
 	if <-serverManagerChan == "OK"{
@@ -43,12 +41,10 @@ func main(){
 	}
 	b,_ := json.Marshal(config)
 	serverManagerChan <- string(b)
-	//serverManagerChan <- "Create"
-	//serverManagerChan <- "AVS"
-}
+	serverManagerChan <- "Create"
+	serverManagerChan <- "AV"
+	serverManagerChan <- ""
 
-func saveServersInfo(ch chan string){
-	ch <- "List"
 }
 
 
@@ -73,14 +69,4 @@ func printInfo() {
 	fmt.Println("---------------------")
 	time.Sleep(300 * time.Millisecond)
 	fmt.Println("version:" + VERSION)
-}
-func pathExists(path string) bool {
-	_, err := os.Stat(path)
-	if err == nil {
-		return true
-	}
-	if os.IsNotExist(err) {
-		return false
-	}
-	return false
 }
