@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"conf"
 	"encoding/gob"
+	"encoding/json"
 )
 
 var s []Server
@@ -30,6 +31,8 @@ type Server struct {
 	Name         string
 	Status       int
 	OnlinePlayer int
+	MaxPlayers   int
+	MaxMemories  int
 }
 
 // 初始化程序
@@ -47,5 +50,16 @@ func initial() {
 
 // 命令处理器
 func handleCommand(command string) {
+	switch command {
 
+	case "List":
+		outputListOfServers()
+	case "Create":
+
+	}
+}
+
+func outputListOfServers() {
+	b, _ := json.Marshal(s)
+	fmt.Println(b)
 }
