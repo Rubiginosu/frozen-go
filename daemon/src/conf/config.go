@@ -19,23 +19,24 @@ type languageConfig struct {
 	langPath string
 }
 
-func getConfig(filename string) (config, error) {
+func GetConfig(filename string) (config, error) {
 	file, err := os.Open(filename)
 	if err != nil {
-		return nil, err
+		return config{}, err
 	}
 	var v config
 	b, err2 := ioutil.ReadAll(file)
 	if err2 != nil {
-		return nil, err2
+		return config{}, err2
 	}
 	json.Unmarshal(b, &v)
 	return v,nil
 }
 
 
-func generateConfig(filepath string) error{
-	_, err := os.Create(filepath)
+func GenerateConfig(filepath string) error{
+	file, err := os.Create(filepath)
+	defer file.Close()
 	if err != nil {
 		return err
 	}
@@ -44,5 +45,7 @@ func generateConfig(filepath string) error{
 		languageConfig{"spk/lang/chinese.ini"},
 	}
 	s,_ := json.Marshal(v)
-	ioutil.WriteFile(filepath,s,0666)
+	file.Write(s)
+
+	return nil
 }

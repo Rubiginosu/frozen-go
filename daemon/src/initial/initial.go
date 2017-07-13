@@ -13,28 +13,29 @@ Org Rubiginosu
 /*
 本包包含了一些初始化的方法，用于读取配置文件 / 语言包等信息。
  */
-package initial
+package main
 
 import (
 	"conf"
-	"message"
 	"fmt"
 	"time"
+	"os"
 )
 
 const VERSION string = "v0.0"
-const FILE_CONFIGURATION string = "../cnf/frozengo.ini"
+const FILE_CONFIGURATION string = "../conf/fg.json"
 // 用于执行一个初始化操作
 
 func main(){
-	printInfo()
-	loadMessage()
 
-}
-func loadMessage(){
-	languageName := conf.SetConfig(FILE_CONFIGURATION).GetValue("lang","language")
-	languagePath := conf.SetConfig(FILE_CONFIGURATION).GetValue("lang","languagePath")
-	message.LoaderLang(languagePath,languageName)
+	if !(len(os.Args) > 1 && os.Args[1] == "-jump"){
+		printInfo()
+	}
+	if !pathExists(FILE_CONFIGURATION)	{
+		conf.GenerateConfig(FILE_CONFIGURATION)
+	}
+
+
 }
 
 
@@ -60,5 +61,13 @@ func printInfo() {
 	time.Sleep(300 * time.Millisecond)
 	fmt.Println("version:" + VERSION)
 }
-
-
+func pathExists(path string) bool {
+	_, err := os.Stat(path)
+	if err == nil {
+		return true
+	}
+	if os.IsNotExist(err) {
+		return false
+	}
+	return false
+}
