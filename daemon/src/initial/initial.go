@@ -20,6 +20,7 @@ import (
 	"fmt"
 	"time"
 	"os"
+	"serverManager"
 )
 
 const VERSION string = "v0.0"
@@ -27,15 +28,22 @@ const FILE_CONFIGURATION string = "../conf/fg.json"
 // 用于执行一个初始化操作
 
 func main(){
-
+	serverManagerChan := make(chan string)
 	if !(len(os.Args) > 1 && os.Args[1] == "-jump"){
 		printInfo()
 	}
 	if !pathExists(FILE_CONFIGURATION)	{
 		conf.GenerateConfig(FILE_CONFIGURATION)
 	}
-
-
+	go serverManager.ManagerStart(serverManagerChan)
+	if <-serverManagerChan == "OK"{
+		fmt.Println("ServerManager Thread has started")
+	}
+	// Test
+	serverManagerChan <- "Create"
+	serverManagerChan <- "ASDASD"
+	serverManagerChan <- "List"
+	fmt.Println(<- serverManagerChan)
 }
 
 

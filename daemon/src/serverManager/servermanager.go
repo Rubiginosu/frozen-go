@@ -1,38 +1,33 @@
-package main
+package serverManager
 
 import (
-	"os"
-	"fmt"
 	"conf"
-	"encoding/gob"
 	"encoding/json"
+	"io/ioutil"
+	"os"
 )
 
 var s []Server
 /*
 Command : List / Start / getStatus /
  */
-func main() {
-	if len(os.Args) <= 1 || os.Args[1] != "-daemon" {
-		fmt.Print("Do not open me in user cmd.")
-		os.Exit(-1) // 用一个参数来防止用户蜜汁点开
-	}
-	fmt.Println("Server Manager Has been started") // 通知主逻辑线程
+func ManagerStart(ch chan string) {
+	ch <- "OK"
 	initial()
-	var s string
 	for {
-		fmt.Scanf("%s", &s)
+		handleCommand(<-ch, ch)
 	}
 
 }
 
 type Server struct {
-	ID           int
-	Name         string
-	Status       int
-	OnlinePlayer int
-	MaxPlayers   int
-	MaxMemories  int
+	ID     int
+	Name   string
+	Status int
+}
+
+type ServerInfomation struct {
+	Name string
 }
 
 // 初始化程序
@@ -40,26 +35,29 @@ func initial() {
 	config, _ := conf.GetConfig("../conf/fg.json")
 	//servers := config.Smc.Servers
 	// 打开文件
-	file, _ := os.Open(config.Smc.Servers)
-	dec := gob.NewDecoder(file)
-	err2 := dec.Decode(&s)
-	if err2 != nil {
-		panic(err2)
-	}
+
+	b, _ := ioutil.ReadFile(config.Smc.Servers)
+	json.Unmarshal(b, &s)
 }
 
 // 命令处理器
-func handleCommand(command string) {
+func handleCommand(command string, ch chan string) {
 	switch command {
 
 	case "List":
-		outputListOfServers()
+		outputListOfServers(ch)
 	case "Create":
-
+		s = append(s, Server{len(s), <-ch,0})
 	}
 }
 
-func outputListOfServers() {
+func outputListOfServers(ch chan string) {
 	b, _ := json.Marshal(s)
-	fmt.Println(b)
+	ch <- string(b[:])
+}
+
+func saveServersInfo(){
+	config, _ := conf.GetConfig("../conf/fg.json")
+	file,_ = os.Create(config.Smc.Servers)
+	// TODO Complete it.
 }
