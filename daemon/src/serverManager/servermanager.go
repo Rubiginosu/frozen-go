@@ -4,7 +4,6 @@ import (
 	"os"
 	"fmt"
 	"conf"
-	"errProc"
 	"encoding/gob"
 )
 var s []Server
@@ -31,16 +30,19 @@ type Server struct{
 }
 // 初始化程序
 func initial(){
-	conf := conf.SetConfig("../conf/frozengo.conf")
+	conf := conf.SetConfig("../cnf/frozengo.ini")
+	fmt.Print(conf.ReadList())
 	config := conf.GetValue("ServerManager","Config")
-	file,err := os.Open(config)
-	if err != nil {
-		generateNewServerConf(config)
-	}
-	// 打开文件
-	dec := gob.NewDecoder(file)
-	err2 := dec.Decode(&s)
-	errProc.ProcErr(err2,"Cannot decode server file",nil)
+	fmt.Print(config)
+	//file,err := os.Open(config)
+	//if err != nil {
+	//	generateNewServerConf(config)
+	//	return
+	//}
+	//// 打开文件
+	//dec := gob.NewDecoder(file)
+	//err2 := dec.Decode(&s)
+	//errProc.ProcErr(err2,"Cannot decode server file",nil)
 
 }
 

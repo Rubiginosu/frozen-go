@@ -23,7 +23,7 @@ import (
 )
 
 const VERSION string = "v0.0"
-const FILE_CONFIGURATION string = "../conf/frozengo.ini"
+const FILE_CONFIGURATION string = "../cnf/frozengo.ini"
 // 用于执行一个初始化操作
 
 func main(){
