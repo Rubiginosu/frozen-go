@@ -5,15 +5,30 @@ import (
 	"encoding/json"
 	"strconv"
 	"io"
+	"os/exec"
+	"io/ioutil"
 )
 
 type ServerRuntimeConfig struct {
 	Command string
-	Args    []string
+	Args    string
 }
-
-func (server *Server) Start(infoCommunicateChan chan string) {
+// SSSC : ServerStartStatusCode
+const SSSC_EXE_NOT_FOUND_JSON_ERROR int = -1
+const SSSC_OK int = 0
+func (server *Server) Start() int{
 	server.EnvRepair()
+	serverRC,err := server.loadExecutableConfig()
+	if err != nil{
+		return SSSC_EXE_NOT_FOUND_JSON_ERROR
+	} else {
+		cmd := exec.Command(serverRC.Command,serverRC.Args)
+		cmd.Dir = "../server" + strconv.Itoa(server.ID)
+		cmd.Run()
+		cmd.Wait()
+	}
+	return SSSC_OK
+
 }
 
 // SSC: Server Self Checking
@@ -53,7 +68,7 @@ func (server *Server) EnvRepair() bool{
 	case SSC_NO_EXEC_FILE:
 		return false
 	case SSC_NO_CONFIG_FILE:
-		defaultExec := ServerRuntimeConfig{"java -jar Minecraft.jar",nil}
+		defaultExec := ServerRuntimeConfig{"java -jar Minecraft.jar",""}
 		//defaultExec := ServerRuntimeConfig{"ping",nil}
 		file,err := os.Create("../exec/Minecraft.json")
 		defer file.Close()
@@ -63,7 +78,7 @@ func (server *Server) EnvRepair() bool{
 	case SSC_NO_CONFIG_FILE + SSC_NO_SERVER_DIR:
 		// 两路一起执行
 		err3 := os.MkdirAll("../servers/server" + strconv.Itoa(server.ID),0666)
-		defaultExec := ServerRuntimeConfig{"java -jar Minecraft.jar",nil}
+		defaultExec := ServerRuntimeConfig{"java -jar Minecraft.jar",""}
 		//defaultExec := ServerRuntimeConfig{"ping",nil}
 		file,err := os.Create("../exec/Minecraft.json")
 		defer file.Close()
@@ -72,4 +87,17 @@ func (server *Server) EnvRepair() bool{
 		return err == nil && err2 == nil && err3 == nil
 	}
 	return false
+}
+func (server *Server)loadExecutableConfig() ( ServerRuntimeConfig,error){
+	var newServerRuntimeConf ServerRuntimeConfig
+	b,err := ioutil.ReadFile("../exec/" + server.Executable + ".json") // 将配置文件读入
+	if err != nil{
+		// 若在读文件时就有异常则停止反序列化
+		return newServerRuntimeConf,err
+	}
+	err2 := json.Unmarshal(b,&newServerRuntimeConf) //使用自带的json库对读入的东西反序列化
+	if err2 != nil{
+		return newServerRuntimeConf,err
+	}
+	return newServerRuntimeConf,nil // 返回结果
 }

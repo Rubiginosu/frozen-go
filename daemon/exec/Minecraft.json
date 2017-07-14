@@ -1,0 +1,4 @@
+{
+	"Command": "java -jar Minecraft.jar",
+	"Args": ""
+}

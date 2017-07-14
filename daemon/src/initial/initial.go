@@ -42,7 +42,9 @@ func main(){
 	b,_ := json.Marshal(config)
 	serverManagerChan <- string(b)
 	serverManagerChan <- "Create"
-	serverManagerChan <- "AVASSSAD"
+	serverManagerChan <- "TestServer"
+	serverManagerChan <- "Start"
+	serverManagerChan <- "TestServer"
 	serverManagerChan <- ""
 
 }

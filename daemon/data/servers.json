@@ -1,13 +1,7 @@
 [
 	{
 		"ID": 0,
-		"Name": "AVASSSAD",
-		"Status": 0,
-		"Executable": ""
-	},
-	{
-		"ID": 1,
-		"Name": "AVASSSAD",
+		"Name": "TestServer",
 		"Status": 0,
 		"Executable": ""
 	}
