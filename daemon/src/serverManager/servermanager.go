@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"io/ioutil"
 	"fmt"
+	"strconv"
 )
 
 var s []Server
@@ -32,9 +33,6 @@ type Server struct {
 	Executable string
 }
 
-type ServerInfomation struct {
-	Name string
-}
 
 // 命令处理器
 func handleCommand(command string, ch chan string) {
@@ -44,9 +42,28 @@ func handleCommand(command string, ch chan string) {
 		outputListOfServers(ch)
 	case "Create":
 		s = append(s,Server{len(s),<-ch,0,""})
+		s[len(s) - 1].generateDefaultConfig()
 		b, _ := json.MarshalIndent(s,"","\t")
 		fmt.Println(config.Smc.Servers)
 		ioutil.WriteFile(config.Smc.Servers, b, 0666)
+	case "Start":
+		serverNameID := <- ch
+		ID,err := strconv.Atoi(serverNameID)// 若传入的是整数，则比较ID
+		if err == nil{
+			for i:=0;i<len(s);i++ {
+				if s[i].ID == ID {
+					s[i].Start(ch)
+				}
+			}
+		} else {
+			// 不是整数判断名称
+			for i:=0;i < len(s);i++{
+				if  s[i].Name == serverNameID{
+					s[i].Start(ch)
+				}
+			}
+		}
+
 	}
 }
 
