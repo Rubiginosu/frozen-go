@@ -37,15 +37,12 @@ func handleCommand(command string, ch chan string) {
 		ioutil.WriteFile(config.Smc.Servers, b, 0666)
 		servers = append(servers, ServerRun{ID: len(servers), Status: 0, })
 	case "Start":
-		fmt.Println("start")
 		serverNameID := <-ch
-		fmt.Println(serverSaved)
 		ID, err := strconv.Atoi(serverNameID) // 若传入的是整数，则比较ID
 		var startingId int
 		if err == nil {
 			for i := 0; i < len(serverSaved); i++ {
 				if serverSaved[i].ID == ID {
-					fmt.Println(startingId)
 					startingId = i
 					break
 				}
