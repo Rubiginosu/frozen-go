@@ -8,16 +8,18 @@ import (
 
 type Config struct {
 	Smc  serverManagerConfig
-	Lang languageConfig
+	Dsc  DaemonServerConfig
+}
+
+type DaemonServerConfig struct {
+	Port int
+	VerifyCode string
 }
 
 type serverManagerConfig struct {
 	Servers string
 }
 
-type languageConfig struct {
-	langPath string
-}
 
 func GetConfig(filename string) (Config, error) {
 	file, err := os.Open(filename)
