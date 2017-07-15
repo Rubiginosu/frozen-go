@@ -1,4 +1,7 @@
 {
-	"Command": "java -jar test.jar",
-	"Args": ""
+	"Command": "java",
+	"Args": [
+		"-jar",
+		"../exec/Minecraft.jar"
+	]
 }

@@ -18,11 +18,10 @@ package main
 import (
 	"fmt"
 	"time"
-	"os/exec"
-	"os"
 	"conf"
 	"serverManager"
 	"encoding/json"
+	"os"
 )
 
 const VERSION string = "v0.0"
@@ -43,9 +42,11 @@ func main() {
 	}
 	b,_ := json.Marshal(config)
 	serverManagerChan <- string(b)
-	serverManagerChan <- "Start"
-	serverManagerChan <- "0"
-	serverManagerChan <- ""
+	for {
+		var s string
+		fmt.Scanf("%s",&s)
+		serverManagerChan <- s
+	}
 
 }
 
