@@ -6,6 +6,9 @@ import (
 	"crypto/sha256"
 	"conf"
 	"strconv"
+	"fmt"
+	"bufio"
+	"bytes"
 )
 
 type Response struct {
@@ -18,6 +21,7 @@ func StartDaemonServer(inch chan string,outch chan string) {
 
 	json.Unmarshal([]byte(configStr),&config)
 	ln, err := net.Listen("tcp", ":" + strconv.Itoa(config.Port)) // 默认使用tcp连接
+	defer ln.Close()
 	if err != nil {
 		outch <- err.Error()
 		panic(err)
@@ -25,25 +29,38 @@ func StartDaemonServer(inch chan string,outch chan string) {
 		for {
 			conn, err := ln.Accept()
 			if err != nil {
-				// handle error
 				continue
 			}
 			go handleConnection(conn)
+
 		}
 	}
 
 }
-func handleConnection(c net.Conn,) {
-	welcomeMessage,_ := json.Marshal(Response{0,"Hello!"})
-	c.Write(welcomeMessage)
+func handleConnection(c net.Conn) {
+	if welcomeAuth(c) {
+		c.Write([]byte("Auth Ok"))
+
+	} else {
+		c.Close()
+	}
+}
+
+func welcomeAuth(c net.Conn) bool{
+	w,_:= json.Marshal(Response{0,"Hello!"})
+	c.Write(w)
 	var request []byte
-	c.Read(request)
+
+	reader := bufio.NewReader(c)
+	request,_ = reader.ReadBytes('\n')
+	bytes.TrimSpace(request)
+	fmt.Println(request)
 	verifyCode := sha256.Sum256(request)
 	localVerifyCode := sha256.Sum256([]byte(config.VerifyCode))
+	fmt.Println([]byte(config.VerifyCode))
 	if verifyCode == localVerifyCode {
-		c.Write([]byte("OK"))
+		return true
 	} else {
-		c.Write([]byte("Verify Error"))
-		c.Close()
+		return false
 	}
 }

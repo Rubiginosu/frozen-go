@@ -23,5 +23,5 @@ type ServerRun struct {
 	IO      serverIOChannel
 	Status  int
 	InFile  *os.File
-	OutFIle *os.File
+	OutFile *os.File
 }

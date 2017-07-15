@@ -7,19 +7,18 @@ import (
 )
 
 type Config struct {
-	Smc  serverManagerConfig
-	Dsc  DaemonServerConfig
+	Smc serverManagerConfig
+	Dsc DaemonServerConfig
 }
 
 type DaemonServerConfig struct {
-	Port int
+	Port       int
 	VerifyCode string
 }
 
 type serverManagerConfig struct {
 	Servers string
 }
-
 
 func GetConfig(filename string) (Config, error) {
 	file, err := os.Open(filename)
@@ -32,21 +31,20 @@ func GetConfig(filename string) (Config, error) {
 		return Config{}, err2
 	}
 	json.Unmarshal(b, &v)
-	return v,nil
+	return v, nil
 }
 
-
-func GenerateConfig(filepath string) error{
+func GenerateConfig(filepath string) error {
 	file, err := os.Create(filepath)
 	defer file.Close()
 	if err != nil {
 		return err
 	}
 	var v Config = Config{
-		serverManagerConfig{"data/servers.json"},
-		languageConfig{"spk/lang/chinese.ini"},
+		serverManagerConfig{"../data/servers.json"},
+		DaemonServerConfig{52023,"Test"}, // 为何选择52023？俺觉得23号这个妹纸很可爱啊
 	}
-	s,_ := json.MarshalIndent(v,"","\t")
+	s, _ := json.MarshalIndent(v, "", "\t")
 	file.Write(s)
 
 	return nil

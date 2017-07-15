@@ -19,10 +19,9 @@ import (
 	"fmt"
 	"time"
 	"conf"
-	"serverManager"
 	"encoding/json"
 	"os"
-	"daemonServer"
+	"serverManager"
 )
 
 const VERSION string = "v0.0"
@@ -43,11 +42,16 @@ func main() {
 	}
 	b,_ := json.Marshal(config)
 	serverManagerChan <- string(b)
-	if <-serverManagerChan == "OK" {
-		daemonServerOutChan := make(<-chan string)
-		daemonServerInChan := make(chan<- string)
-		go daemonServer.StartDaemonServer(daemonServerOutChan,daemonServerInChan)
-	}
+	//if <-serverManagerChan == "OK" {
+	//daemonServerOutChan := make(chan string)
+	//daemonServerInChan := make(chan string)
+	//conf,_ := conf.GetConfig("../conf/fg.json")
+	//go daemonServer.StartDaemonServer(daemonServerInChan,daemonServerOutChan)
+	//b,_ := json.Marshal(conf.Dsc)
+	//daemonServerInChan <- string(b)
+	//daemonServerInChan <- ""
+	//}
+	<-serverManagerChan
 	for {
 		var s string
 		fmt.Scanf("%s",&s)

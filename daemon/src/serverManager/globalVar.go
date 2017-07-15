@@ -2,7 +2,6 @@ package serverManager
 
 import (
 	"conf"
-	"os"
 )
 
 var serverSaved []ServerLocal

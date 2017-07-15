@@ -1,6 +1,9 @@
 {
-  "Smc": {
-    "Servers": "../data/servers.json"
-  },
-  "Lang": {}
+	"Smc": {
+		"Servers": "../data/servers.json"
+	},
+	"Dsc": {
+		"Port": 52023,
+		"VerifyCode": "Test"
+	}
 }

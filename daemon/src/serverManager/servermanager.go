@@ -3,9 +3,8 @@ package serverManager
 import (
 	"encoding/json"
 	"io/ioutil"
-	"fmt"
 	"strconv"
-	"os"
+	"fmt"
 )
 
 /*
@@ -25,8 +24,6 @@ func ManagerStart(ch chan string) {
 
 }
 
-
-
 // 命令处理器
 func handleCommand(command string, ch chan string) {
 	switch command {
@@ -35,34 +32,45 @@ func handleCommand(command string, ch chan string) {
 		outputListOfServers(ch)
 	case "Create":
 		serverSaved = append(serverSaved, ServerLocal{len(serverSaved), <-ch, ""})
-		serverSaved[len(serverSaved) - 1].EnvRepair()
-		b, _ := json.MarshalIndent(serverSaved,"","\t")
+		serverSaved[len(serverSaved)-1].EnvPrepare()
+		b, _ := json.MarshalIndent(serverSaved, "", "\t")
 		ioutil.WriteFile(config.Smc.Servers, b, 0666)
-		servers = append(servers,ServerRun{ID:len(servers),Status:0,})
+		servers = append(servers, ServerRun{ID: len(servers), Status: 0, })
 	case "Start":
-		serverNameID := <- ch
-		ID,err := strconv.Atoi(serverNameID)// 若传入的是整数，则比较ID
+		fmt.Println("start")
+		serverNameID := <-ch
+		fmt.Println(serverSaved)
+		ID, err := strconv.Atoi(serverNameID) // 若传入的是整数，则比较ID
 		var startingId int
-		if err == nil{
-			for i:=0;i<len(serverSaved);i++ {
+		if err == nil {
+			for i := 0; i < len(serverSaved); i++ {
 				if serverSaved[i].ID == ID {
+					fmt.Println(startingId)
 					startingId = i
-
+					break
 				}
 			}
 		} else {
 			// 不是整数判断名称
-			for i:=0;i < len(serverSaved);i++{
-				if  serverSaved[i].Name == serverNameID{
+			for i := 0; i < len(serverSaved); i++ {
+				if serverSaved[i].Name == serverNameID {
 					startingId = i
+					break
 				}
 			}
 
 		}
-		stream,err := serverSaved[startingId].Start()
-		servers[startingId].InFile = stream[0]
-		servers[startingId].OutFIle = stream[1]
-
+		stream, err := serverSaved[startingId].Start()
+		if err == nil {
+			newRunningServer := ServerRun{
+				ID:      startingId,
+				InFile:  stream[0],
+				OutFile: stream[1],
+			}
+			servers = append(servers,newRunningServer)
+		} else {
+			return
+		}
 	}
 }
 

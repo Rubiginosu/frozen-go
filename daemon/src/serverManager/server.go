@@ -6,33 +6,39 @@ import (
 	"strconv"
 	"io"
 	"io/ioutil"
-	"fmt"
 	"path/filepath"
 	"errors"
 	"bufio"
+	"os/exec"
 )
 
 
 func (server *ServerLocal) Start() ([]*os.File, error) {
-	server.EnvRepair()
+	server.EnvPrepare()
 	serverRC, err := server.loadExecutableConfig()
 	if err != nil {
+		// 环境准备失败
 		return nil, errors.New("Cannot prepare server env")
 	} else {
+		// 根据提供的EXEC名，搜寻绝对目录
+		execPath,isNoFound := exec.LookPath(serverRC.Command)
+		if isNoFound != nil {
+			return nil,isNoFound // 没找到抛err
+		}
 		nowPath, err := filepath.Abs(".")
 		if err != nil {
 			return nil, errors.New(err.Error())
 		}
+		// 取得服务器目录
 		serverRunPath := filepath.Clean(nowPath + "/../servers/server" + strconv.Itoa(server.ID))
-		fmt.Println(serverRunPath)
-		fmt.Println(serverRC)
 		serverStream := make([]*os.File, 3)
 		serverProcAttr := &os.ProcAttr{
-			Dir: serverRunPath,
-			Files: serverStream,
+			Dir: serverRunPath+"/",
+			//Files: serverStream,
+			Files: []*os.File{os.Stdin,os.Stdout,os.Stderr},
 		}
 
-		_, err2 := os.StartProcess("D:\\test\\echoPath.exe", []string{""}, serverProcAttr)
+		_, err2 := os.StartProcess(execPath,append([]string{execPath},serverRC.Args...) , serverProcAttr)
 		if err2 != nil {
 			return nil, errors.New(err2.Error())
 		}
@@ -59,7 +65,7 @@ func (server *ServerLocal) selfChecking() int {
 }
 
 // 按照错误码修复环境
-func (server *ServerLocal) EnvRepair() bool {
+func (server *ServerLocal) EnvPrepare() bool {
 	statusCode := server.selfChecking()
 	switch statusCode {
 	case SSC_NO_SERVER_DIR:
@@ -112,7 +118,7 @@ func  (s *ServerRun)writeServer(ch chan string){
 }
 func (s *ServerRun)readServer(ch chan string){
 	for range ch{
-		reader := bufio.NewReader(s.OutFIle)
+		reader := bufio.NewReader(s.OutFile)
 		for{
 			line,err := reader.ReadString('\n')
 			if io.EOF == err || err != nil {
@@ -125,4 +131,6 @@ func (s *ServerRun)readServer(ch chan string){
 func (s *ServerRun)ConnectToServerPipe(in ,out chan string,id int){
 	servers[id].IO.Out = out
 	servers[id].IO.In = in
+	s.WriteReadServer()
 }
+
