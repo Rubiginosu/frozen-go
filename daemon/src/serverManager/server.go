@@ -121,3 +121,8 @@ func (s *ServerRun)readServer(ch chan string){
 		}
 	}
 }
+
+func (s *ServerRun)ConnectToServerPipe(in ,out chan string,id int){
+	servers[id].IO.Out = out
+	servers[id].IO.In = in
+}

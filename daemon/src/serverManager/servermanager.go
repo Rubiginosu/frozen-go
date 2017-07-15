@@ -5,6 +5,7 @@ import (
 	"io/ioutil"
 	"fmt"
 	"strconv"
+	"os"
 )
 
 /*
@@ -36,8 +37,8 @@ func handleCommand(command string, ch chan string) {
 		serverSaved = append(serverSaved, ServerLocal{len(serverSaved), <-ch, ""})
 		serverSaved[len(serverSaved) - 1].EnvRepair()
 		b, _ := json.MarshalIndent(serverSaved,"","\t")
-		fmt.Println(config.Smc.Servers)
 		ioutil.WriteFile(config.Smc.Servers, b, 0666)
+		servers = append(servers,ServerRun{ID:len(servers),Status:0,})
 	case "Start":
 		serverNameID := <- ch
 		ID,err := strconv.Atoi(serverNameID)// 若传入的是整数，则比较ID
@@ -59,11 +60,8 @@ func handleCommand(command string, ch chan string) {
 
 		}
 		stream,err := serverSaved[startingId].Start()
-		if err != nil {
-			panic(err)
-		} else {
-			serverStream = append(serverStream,stream)
-		}
+		servers[startingId].InFile = stream[0]
+		servers[startingId].OutFIle = stream[1]
 
 	}
 }

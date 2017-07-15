@@ -7,4 +7,4 @@ import (
 
 var serverSaved []ServerLocal
 var config conf.Config
-var serverStream [][]*os.File
+var servers []ServerRun
