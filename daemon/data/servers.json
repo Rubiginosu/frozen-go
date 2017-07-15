@@ -3,6 +3,24 @@
 		"ID": 0,
 		"Name": "TestServer",
 		"Status": 0,
+		"Executable": "Minecraft"
+	},
+	{
+		"ID": 1,
+		"Name": "TestServer",
+		"Status": 0,
+		"Executable": ""
+	},
+	{
+		"ID": 2,
+		"Name": "TestServer",
+		"Status": 0,
+		"Executable": ""
+	},
+	{
+		"ID": 3,
+		"Name": "TestServer",
+		"Status": 0,
 		"Executable": ""
 	}
 ]

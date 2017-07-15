@@ -5,8 +5,9 @@ import (
 	"encoding/json"
 	"strconv"
 	"io"
-	"os/exec"
 	"io/ioutil"
+	"fmt"
+	"os/exec"
 )
 
 type ServerRuntimeConfig struct {
@@ -22,10 +23,9 @@ func (server *Server) Start() int{
 	if err != nil{
 		return SSSC_EXE_NOT_FOUND_JSON_ERROR
 	} else {
-		cmd := exec.Command(serverRC.Command,serverRC.Args)
-		cmd.Dir = "../server" + strconv.Itoa(server.ID)
-		cmd.Run()
-		cmd.Wait()
+		fmt.Println(serverRC.Command)
+		cmd := exec.Command("dir",serverRC.Args)
+		fmt.Println(cmd.Output())
 	}
 	return SSSC_OK
 
@@ -35,24 +35,20 @@ func (server *Server) Start() int{
 // Status CODE
 // 000
 // 三位二进制表示
-const SSC_NO_EXEC_FILE int = -1
-const SSC_NO_CONFIG_FILE int = -2
-const SSC_NO_SERVER_DIR = -4
+const SSC_NO_CONFIG_FILE int = -1
+const SSC_NO_SERVER_DIR = -2
 
 // 检查运行环境
 func (server *Server) selfChecking() int {
 	var status int = 0
 	_, err := os.Stat("../exec/" + server.Executable + ".json")
-	_, err2 := os.Stat("../exec/" + server.Executable)
-	_, err3 := os.Stat("../servers/server" + strconv.Itoa(server.ID))
-	if err == nil {
-		// 文件状态良好
-		status += SSC_NO_EXEC_FILE
-	}
-	if err2 == nil {
+	_, err2 := os.Stat("../servers/server" + strconv.Itoa(server.ID))
+	if err != nil {
+
 		status += SSC_NO_CONFIG_FILE
+
 	}
-	if err3 == nil {
+	if err2 != nil {
 		status += SSC_NO_SERVER_DIR
 	}
 	return status
@@ -65,8 +61,6 @@ func (server *Server) EnvRepair() bool{
 	case SSC_NO_SERVER_DIR:
 		err := os.MkdirAll("../servers/server" + strconv.Itoa(server.ID),0666)
 		return err == nil
-	case SSC_NO_EXEC_FILE:
-		return false
 	case SSC_NO_CONFIG_FILE:
 		defaultExec := ServerRuntimeConfig{"java -jar Minecraft.jar",""}
 		//defaultExec := ServerRuntimeConfig{"ping",nil}

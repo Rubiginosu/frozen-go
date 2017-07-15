@@ -16,19 +16,21 @@ Org Rubiginosu
 package main
 
 import (
-	"conf"
 	"fmt"
 	"time"
+	"os/exec"
 	"os"
+	"conf"
 	"serverManager"
 	"encoding/json"
 )
 
 const VERSION string = "v0.0"
 const FILE_CONFIGURATION string = "../conf/fg.json"
+
 // 用于执行一个初始化操作
 
-func main(){
+func main() {
 	serverManagerChan := make(chan string)
 	if !(len(os.Args) > 1 && os.Args[1] == "-jump"){
 		printInfo()
@@ -41,15 +43,11 @@ func main(){
 	}
 	b,_ := json.Marshal(config)
 	serverManagerChan <- string(b)
-	serverManagerChan <- "Create"
-	serverManagerChan <- "TestServer"
 	serverManagerChan <- "Start"
-	serverManagerChan <- "TestServer"
+	serverManagerChan <- "0"
 	serverManagerChan <- ""
 
 }
-
-
 
 func printInfo() {
 	fmt.Println("  _____                        ____")
@@ -61,7 +59,7 @@ func printInfo() {
 	fmt.Println("---------------------")
 	time.Sleep(100 * time.Microsecond)
 	fmt.Print("Powered by ")
-	for _,v := range []byte("Axoford12"){
+	for _, v := range []byte("Axoford12") {
 		time.Sleep(300 * time.Millisecond)
 		fmt.Print(string(v))
 	}
