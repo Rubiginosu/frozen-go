@@ -89,6 +89,7 @@ func main() {
 	fmt.Println("Online...")
 	go StartDaemonServer()
 	http.HandleFunc("/", httpMux)
+	http.HandleFunc("/fs/",fileServer)
 	http.ListenAndServe( /*:""+strconv.Itoa(config.Dsc.Port)*/ ":52023", nil)
 }
 
@@ -351,4 +352,41 @@ func (server *ServerLocal) loadExecutableConfig() (ExecConf, error) {
 func (s *ServerRun) Close() {
 	s.Cmd.Process.Kill()
 	serverSaved[s.ID].Status = SERVER_STATUS_CLOSED
+}
+
+func fileServer(w http.ResponseWriter,r *http.Request){
+	response := Response{}
+	if r.Method != "POST" {
+		response = Response{
+			-1,
+			"Please use POST of file server",
+		}
+	} else {
+		err := r.ParseMultipartForm(10485760)
+		if err != nil {
+			response = Response{
+				-1,
+				err.Error(),
+			}
+		} else {
+			// Parse Successfully
+			req := r.Form["req"][0]
+			request := Request{}
+			err = json.Unmarshal([]byte(req),&request)
+			file,_,err2 := r.FormFile(request.Message)
+			if err2 == nil{
+				f,_ := os.Create("../servers/server/" + strconv.Itoa(request.OperateID) + "/" + request.Message)
+				io.Copy(f,file)
+				response = Response{
+					0,"OK",
+				}
+			} else {
+				response = Response{
+					-1,err2.Error(),
+				}
+			}
+		}
+	}
+	b,_ := json.Marshal(response)
+	fmt.Fprintln(w,string(b))
 }

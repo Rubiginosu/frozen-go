@@ -2,25 +2,31 @@
 	{
 		"ID": 0,
 		"Name": "TestServer",
-		"Status": 0,
-		"Executable": "Minecraft"
+		"Executable": "ping",
+		"Status": 0
 	},
 	{
 		"ID": 1,
 		"Name": "TestServer",
-		"Status": 0,
-		"Executable": ""
+		"Executable": "",
+		"Status": 0
 	},
 	{
 		"ID": 2,
 		"Name": "TestServer",
-		"Status": 0,
-		"Executable": ""
+		"Executable": "",
+		"Status": 0
 	},
 	{
 		"ID": 3,
 		"Name": "TestServer",
-		"Status": 0,
-		"Executable": ""
+		"Executable": "",
+		"Status": 0
+	},
+	{
+		"ID": 4,
+		"Name": "TestServer",
+		"Executable": "",
+		"Status": 0
 	}
 ]
