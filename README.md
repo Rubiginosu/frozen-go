@@ -13,6 +13,7 @@
 >1.服务器请务必预先安装：Apache2、Postgresql9.6、php7<br />
 >2、禁止二次售卖、倒卖、以及任何发生钱财交易的行为<br />
 >3、禁止在任何非作者授权的地方以自己的名义随意声明本项目所有权<br />
+>4、FrozenGo面板使用Laravel框架强力驱动，关于面板无法正常启动请参阅<a href="http://laravelacademy.org/post/6665.html">laravel文档</a>中的<strong>应用配置</strong><br />
 ## 4. 情怀 
 >鉴于MC市场非常之乱，倒卖服务器的小学生非常多，我们希望能够清理一番环境<br />
 >给大家一个曾经的MC 。 毕竟MC这个游戏我也是从0.8(PE)/1.5(PC)时代走来的。<br />
