@@ -7,18 +7,20 @@ import (
 	"conf"
 	"os"
 	"time"
-	"sync"
 	"io"
 	"net"
 	"strconv"
 	"bufio"
 	"crypto/sha256"
-	"errors"
 	"os/exec"
+	"sync"
+	"errors"
 	"path/filepath"
 )
+
 const VERSION string = "v0.0"
 const FILE_CONFIGURATION string = "../conf/fg.json"
+
 var serverSaved []ServerLocal
 var config conf.Config
 var servers []ServerRun
@@ -33,9 +35,9 @@ const SSC_NO_SERVER_DIR = -2
 
 // 已经关闭
 const SERVER_STATUS_CLOSED = 0
+
 // 正在运行
 const SERVER_STATUS_RUNNING = 1
-
 
 type ServerLocal struct {
 	ID         int
@@ -50,11 +52,10 @@ type ExecConf struct {
 }
 
 type ServerRun struct {
-	ID      int
-	Status  int
-	InFile  *os.File
-	OutFile *os.File
-	Proc    *os.Process
+	ID     int
+	Cmd    *exec.Cmd
+	Stdin  io.WriteCloser
+	Stdout io.ReadCloser
 }
 
 type Request struct {
@@ -68,7 +69,6 @@ type Response struct {
 	Message string
 }
 
-
 /*
 Command : List / Start / getStatus /
  */
@@ -77,11 +77,15 @@ func main() {
 	if !(len(os.Args) > 1 && os.Args[1] == "-jump") {
 		printInfo()
 	}
-	config,_ = conf.GetConfig(FILE_CONFIGURATION)
+	config, _ = conf.GetConfig(FILE_CONFIGURATION)
 	b, _ := ioutil.ReadFile(config.Smc.Servers)
 	json.Unmarshal(b, &serverSaved)
 	fmt.Println("Started Server Manager.")
 	fmt.Println("Online...")
+	go StartDaemonServer()
+
+	handleRequest(Request{"Start", 0, ""})
+
 	go StartDaemonServer()
 	wg.Add(1)
 	wg.Wait()
@@ -89,14 +93,13 @@ func main() {
 
 
 // 命令处理器
-func handleRequest(request Request) Response{
+func handleRequest(request Request) Response {
 	switch request.Method {
 
 	case "List":
 		return outputListOfServers()
 	case "Create":
 		serverSaved = append(serverSaved, ServerLocal{len(serverSaved), request.Message, "", 0})
-
 		serverSaved[len(serverSaved)-1].EnvPrepare()
 		// 序列化b来储存。
 		b, _ := json.MarshalIndent(serverSaved, "", "\t")
@@ -104,34 +107,42 @@ func handleRequest(request Request) Response{
 		// 新创建的服务器写入data文件
 		ioutil.WriteFile(config.Smc.Servers, b, 0666)
 
-		// 写入数据
-		servers = append(servers, ServerRun{ID: len(servers), Status: 0, })
-
 		return Response{
 			0,
 			"OK",
 		}
 	case "Start":
 		// 操作ID
-		serverSaved[request.OperateID].Start()
-		return Response{
-			0, "OK",
+		err := serverSaved[request.OperateID].Start()
+		if err == nil {
+			return Response{
+				0, "OK",
+			}
+		} else {
+			return Response{-1, err.Error()}
 		}
+
 	case "Stop":
+
 		servers[request.OperateID].Close()
+
 		return Response{
 			0, "OK",
 		}
+
+	case "SetExecutable":
+		serverSaved[request.OperateID].Executable = request.Message
 	}
 	return Response{
-		-1,"Unexpected err",
+		-1, "Unexpected err",
 	}
 }
 
-func outputListOfServers() Response{
+func outputListOfServers() Response {
 	b, _ := json.Marshal(serverSaved)
-	return Response{0,string(b)}
+	return Response{0, string(b)}
 }
+
 func printInfo() {
 	fmt.Println("  _____                        ____")
 	fmt.Println("|  ___| __ ___ _______ _ __  / ___| ___")
@@ -173,16 +184,21 @@ func Auth(c net.Conn) bool {
 	fmt.Println("Connector Auth...")
 	var requestBytes []byte
 	reader := bufio.NewReader(c)
-	for{
+	for {
 		requestTemp, err := reader.ReadBytes('\n')
-		if err != nil || err == io.EOF{
+		if err != nil || err == io.EOF {
 			requestBytes = requestTemp
 			break
 		}
 
 	}
+	fmt.Println(string(requestBytes))
 	var request Request
-	json.Unmarshal(requestBytes,&request)
+	err := json.Unmarshal(requestBytes, &request)
+	if err != nil {
+		fmt.Println(err)
+	}
+	fmt.Println(request)
 	verifyCode := sha256.Sum256([]byte(request.Message))
 	localVerifyCode := sha256.Sum256([]byte(config.Dsc.VerifyCode))
 	fmt.Println([]byte(config.Dsc.VerifyCode))
@@ -210,28 +226,36 @@ func handleConnection(c net.Conn) {
 					break
 				}
 			}
+			fmt.Println("Received request")
 			var request Request
-			err2 := json.Unmarshal(requestBytes,&request)
+			err2 := json.Unmarshal(requestBytes, &request)
+			fmt.Println("Received" + request.Method + "Method")
 			if err != nil {
 				continue
-			} else if err2 != nil{
+			} else if err2 != nil {
 				response.Message = err.Error()
 				response.Status = -1
-			} else if request.Method != "GetInput" && request.Method != "GetOutput"{
+			} else if request.Method != "GetInput" && request.Method != "GetOutput" {
 				response = handleRequest(request)
 			} else {
 				break
 			}
-			b,_ := json.Marshal(response)
+			b, _ := json.Marshal(response)
 			writer.Write(b)
 			writer.Flush()
 		}
-		if request.Method == "GetOutput"{
-			io.Copy(c,servers[request.OperateID].OutFile)
-		} else if request.Method == "GetInput"{
-			io.Copy(servers[request.OperateID].InFile,c)
-		}
+		if request.Method == "GetOutput" {
+			for {
+				io.Copy(os.Stdout, servers[0].Stdout)
+			}
+		} else if request.Method == "GetInput" {
+			go func() {
+				for {
+					io.Copy(servers[request.OperateID].Stdin, c)
+				}
+			}()
 
+		}
 
 	} else {
 		c.Close()
@@ -239,6 +263,7 @@ func handleConnection(c net.Conn) {
 }
 
 func (server *ServerLocal) Start() error {
+	fmt.Println()
 	server.EnvPrepare()
 	serverRC, err := server.loadExecutableConfig()
 	if err != nil {
@@ -256,24 +281,28 @@ func (server *ServerLocal) Start() error {
 		}
 		// 取得服务器目录
 		serverRunPath := filepath.Clean(nowPath + "/../servers/server" + strconv.Itoa(server.ID))
-		serverStream := make([]*os.File, 3)
-		serverProcAttr := &os.ProcAttr{
-			Dir: serverRunPath + "/",
-			Files: serverStream,
-			//Files: []*os.File{os.Stdin, os.Stdout, os.Stderr},
+		cmd := exec.Command(execPath, serverRC.Args...)
+		cmd.Dir = serverRunPath
+		stdout, err := cmd.StdoutPipe()
+		stdin, err2 := cmd.StdinPipe()
+		if err2 != nil {
+			panic(err2)
+		}
+		if err != nil {
+			panic(err)
 		}
 
-		proc, err2 := os.StartProcess(execPath, append([]string{execPath}, serverRC.Args...), serverProcAttr)
-		if err2 != nil {
-			return errors.New(err2.Error())
+		err3 := cmd.Start()
+		if err3 != nil {
+			panic(err3)
 		}
 		newRunningServer := ServerRun{
-			ID:      server.ID,
-			InFile:  serverStream[0],
-			OutFile: serverStream[1],
-			Proc:proc,
+			ID:     server.ID,
+			Cmd:    cmd,
+			Stdout: stdout,
+			Stdin:  stdin,
 		}
-		server.Status = 1
+		server.Status = SERVER_STATUS_RUNNING
 		servers = append(servers, newRunningServer)
 		return nil
 	}
@@ -338,9 +367,6 @@ func (server *ServerLocal) loadExecutableConfig() (ExecConf, error) {
 }
 
 func (s *ServerRun) Close() {
-	s.Proc.Release()
-	s.Proc.Kill()
-	s.OutFile.Close()
-	s.InFile.Close()
+	s.Cmd.Process.Kill()
+	serverSaved[s.ID].Status = SERVER_STATUS_CLOSED
 }
-
