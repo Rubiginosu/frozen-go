@@ -10,12 +10,12 @@ import (
 	"io"
 	"net"
 	"strconv"
-	"bufio"
-	"crypto/sha256"
 	"os/exec"
-	"sync"
 	"errors"
 	"path/filepath"
+	"net/http"
+	"crypto/sha256"
+	"bufio"
 )
 
 const VERSION string = "v0.0"
@@ -69,11 +69,16 @@ type Response struct {
 	Message string
 }
 
+type HttpRequest struct {
+	Auth string
+	Req  Request
+}
+
 /*
 Command : List / Start / getStatus /
  */
 func main() {
-	wg := sync.WaitGroup{}
+	//wg := sync.WaitGroup{}
 	if !(len(os.Args) > 1 && os.Args[1] == "-jump") {
 		printInfo()
 	}
@@ -83,14 +88,9 @@ func main() {
 	fmt.Println("Started Server Manager.")
 	fmt.Println("Online...")
 	go StartDaemonServer()
-
-	handleRequest(Request{"Start", 0, ""})
-
-	go StartDaemonServer()
-	wg.Add(1)
-	wg.Wait()
+	http.HandleFunc("/", httpMux)
+	http.ListenAndServe( /*:""+strconv.Itoa(config.Dsc.Port)*/ ":52023", nil)
 }
-
 
 // 命令处理器
 func handleRequest(request Request) Response {
@@ -132,6 +132,9 @@ func handleRequest(request Request) Response {
 
 	case "SetExecutable":
 		serverSaved[request.OperateID].Executable = request.Message
+		return Response{
+			0, "OK",
+		}
 	}
 	return Response{
 		-1, "Unexpected err",
@@ -164,8 +167,9 @@ func printInfo() {
 	time.Sleep(300 * time.Millisecond)
 	fmt.Println("version:" + VERSION)
 }
+
 func StartDaemonServer() {
-	ln, err := net.Listen("tcp", ":"+strconv.Itoa(config.Dsc.Port)) // 默认使用tcp连接
+	ln, err := net.Listen("tcp", ":"+strconv.Itoa(config.Dsc.Port + 1)) // 默认使用tcp连接
 	if err != nil {
 		panic(err)
 	} else {
@@ -180,86 +184,64 @@ func StartDaemonServer() {
 	}
 
 }
-func Auth(c net.Conn) bool {
-	fmt.Println("Connector Auth...")
-	var requestBytes []byte
+
+func httpMux(w http.ResponseWriter, r *http.Request) {
+	r.ParseForm()
+	response := Response{}
+	if v, ok := r.Form["req"]; ok {
+		request := HttpRequest{}
+		err := json.Unmarshal([]byte(v[0]), &request)
+		if err != nil {
+			response = Response{-1, err.Error()}
+		} else {
+			if auth([]byte(request.Auth)) {
+				response = handleRequest(request.Req)
+			} else {
+				response = Response{-1, "Auth Failed."}
+			}
+		}
+	} else {
+		response = Response{-1, "Cannot parse json code,please check."}
+	}
+	res, _ := json.Marshal(response)
+	fmt.Fprintln(w, string(res))
+}
+
+func auth(src []byte) bool {
+	dst := sha256.Sum256([]byte(config.Dsc.VerifyCode))
+	auth := sha256.Sum256(src)
+	return dst == auth
+}
+
+func handleConnection(c net.Conn) {
 	reader := bufio.NewReader(c)
+	line, err := reader.ReadBytes('\n')
 	for {
-		requestTemp, err := reader.ReadBytes('\n')
+		line, err = reader.ReadBytes('\n')
 		if err != nil || err == io.EOF {
-			requestBytes = requestTemp
 			break
 		}
-
 	}
-	fmt.Println(string(requestBytes))
-	var request Request
-	err := json.Unmarshal(requestBytes, &request)
-	if err != nil {
-		fmt.Println(err)
-	}
-	fmt.Println(request)
-	verifyCode := sha256.Sum256([]byte(request.Message))
-	localVerifyCode := sha256.Sum256([]byte(config.Dsc.VerifyCode))
-	fmt.Println([]byte(config.Dsc.VerifyCode))
-	if verifyCode == localVerifyCode {
-		fmt.Println("Auth passed")
-		return true
-	} else {
-		fmt.Println("Auth FAILED")
-		return false
-	}
-}
-func handleConnection(c net.Conn) {
-	if Auth(c) {
-		fmt.Println("Client Auth ok,process commands")
-		c.Write([]byte("Auth Ok"))
-		writer := bufio.NewWriter(c)
-		reader := bufio.NewReader(c)
-		var request Request
-		for {
-			var response Response
-			requestBytes, err := reader.ReadBytes('\n')
-			for {
-				requestBytes, err = reader.ReadBytes('\n')
-				if err != nil || err == io.EOF {
-					break
-				}
-			}
-			fmt.Println("Received request")
-			var request Request
-			err2 := json.Unmarshal(requestBytes, &request)
-			fmt.Println("Received" + request.Method + "Method")
-			if err != nil {
-				continue
-			} else if err2 != nil {
-				response.Message = err.Error()
-				response.Status = -1
-			} else if request.Method != "GetInput" && request.Method != "GetOutput" {
-				response = handleRequest(request)
-			} else {
-				break
-			}
-			b, _ := json.Marshal(response)
-			writer.Write(b)
-			writer.Flush()
-		}
-		if request.Method == "GetOutput" {
-			for {
-				io.Copy(os.Stdout, servers[0].Stdout)
-			}
-		} else if request.Method == "GetInput" {
+	request := Request{}
+	json.Unmarshal(line, &request)
+	if auth([]byte(request.Message)){
+		switch request.Method {
+		case "Input":
 			go func() {
 				for {
-					io.Copy(servers[request.OperateID].Stdin, c)
+					io.Copy(servers[request.OperateID].Stdin,c)
 				}
 			}()
-
+		case "Output":
+			go func() {
+				for {
+					io.Copy(c, servers[request.OperateID].Stdout)
+				}
+			}()
 		}
-
-	} else {
-		c.Close()
 	}
+
+
 }
 
 func (server *ServerLocal) Start() error {
