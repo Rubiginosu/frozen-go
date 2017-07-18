@@ -1,5 +1,5 @@
 #!/bin/sh
-echo "Welcome to frozen-go panel setup bash!"
+echo "Welcome to Frozen-GO panel setup bash!"
 echo "Author:XueluoPoi Date:2017-7-18 Version:V1.0 Beta"
 echo "This setup bash will help you set some config correct,so please make sure your input is correct!"
 echo -n "Setting files permission......"
