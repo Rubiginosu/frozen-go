@@ -6,14 +6,14 @@ echo -n "Setting files permission......"
 chmod -R 777 storage
 chmod -R 777 bootstrap/cache
 chown -R apache:apache ../panel
-if[ $? -ne 0 ]
+if[ $? != 0 ]
    then
    echo "Please install Apache 2.0!"
    else
    echo "Success!"
 echo "Installing some important via composer......"
 composer install
-if[ $? -ne 0 ]
+if[ $? != 0 ]
    then
    echo "Please install Composer!"
    else
