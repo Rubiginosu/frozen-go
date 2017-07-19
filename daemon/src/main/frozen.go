@@ -18,7 +18,7 @@ import (
 	"bufio"
 )
 
-const VERSION string = "v0.0"
+const VERSION string = "v0.0 Alpha 0x00d"
 const FILE_CONFIGURATION string = "../conf/fg.json"
 
 var serverSaved []ServerLocal
@@ -88,17 +88,16 @@ func main() {
 	fmt.Println("Started Server Manager.")
 	fmt.Println("Online...")
 	go StartDaemonServer()
-	go func(){
-		fmt.Println("Command ready , type ? for help..")
-		for {
-			var s string
-			fmt.Scanf("%s",&s)
-			processLocalCommand(s)
-		}
-	}()
-	http.HandleFunc("/", httpMux)
-	http.ListenAndServe(":" + strconv.Itoa(config.Dsc.HttpPort) , nil)
 
+	http.HandleFunc("/", httpMux)
+	go http.ListenAndServe(":"+strconv.Itoa(config.Dsc.HttpPort), nil)
+
+	fmt.Println("Done,type \"?\" for help. ")
+	for {
+		var s string
+		fmt.Scanf("%s",&s)
+		processLocalCommand(s)
+	}
 }
 
 // 命令处理器
@@ -133,6 +132,11 @@ func handleRequest(request Request) Response {
 		}
 	case "Start":
 		// 运行这个服务器
+		if request.OperateID > len(serverSaved)-1 {
+			return Response{
+				-1, "Invalid server id",
+			}
+		}
 		err := serverSaved[request.OperateID].Start()
 		if err == nil {
 			return Response{
@@ -143,7 +147,9 @@ func handleRequest(request Request) Response {
 		}
 
 	case "Stop":
-
+		if request.OperateID > len(servers)-1 {
+			return Response{0, "Invalid serverid"}
+		}
 		servers[request.OperateID].Close()
 
 		return Response{
@@ -245,7 +251,7 @@ func handleConnection(c net.Conn) {
 	}
 	request := Request{}
 	json.Unmarshal(line, &request)
-	if auth([]byte(request.Message)){
+	if auth([]byte(request.Message)) {
 		if serverSaved[request.OperateID].Status == 0 {
 			c.Close()
 		}
@@ -253,7 +259,7 @@ func handleConnection(c net.Conn) {
 		case "Input":
 			go func() {
 				for {
-					io.Copy(servers[request.OperateID].Stdin,c)
+					io.Copy(servers[request.OperateID].Stdin, c)
 				}
 			}()
 		case "Output":
@@ -266,7 +272,6 @@ func handleConnection(c net.Conn) {
 			c.Close()
 		}
 	}
-
 
 }
 
@@ -383,20 +388,27 @@ func (server *ServerLocal) loadExecutableConfig() (ExecConf, error) {
 }
 
 func (s *ServerRun) Close() {
+	s.Cmd.Process.Release()
 	s.Cmd.Process.Kill()
 	serverSaved[s.ID].Status = SERVER_STATUS_CLOSED
 }
+
 // 保存服务器信息
-func saveServerInfo() error{
-	b,err := json.Marshal(serverSaved)
+func saveServerInfo() error {
+
+	for i := 0; i < len(serverSaved); i++ {
+		serverSaved[i].Status = 0
+	}
+	b, err := json.Marshal(serverSaved)
 	if err != nil {
 		return err
 	}
-	ioutil.WriteFile(config.Smc.Servers,b,0664)
+	ioutil.WriteFile(config.Smc.Servers, b, 0664)
 	return nil
 }
+
 // 处理本地命令
-func processLocalCommand(c string){
+func processLocalCommand(c string) {
 	switch c {
 	case "stop":
 		fmt.Println("Stopping")
@@ -406,20 +418,20 @@ func processLocalCommand(c string){
 		fmt.Println("FrozenGo" + VERSION + " Help Manual -- by Axoford12")
 		fmt.Println("stop: Stop the daemon.save server changes.")
 		fmt.Println("status: Echo server status.")
-		fmt.Println()
+		return
 	case "status":
 		spaceH := "|--"
 		switch len(serverSaved) {
 		case 0:
-			fmt.Println(spaceH + "There are no server.")
+			fmt.Println(spaceH + "There is no server.")
 		case 1:
-			fmt.Println(spaceH + "There is 1 server running")
+			fmt.Println(spaceH + "There is 1 server")
 		default:
 			fmt.Println(spaceH + "There are " + strconv.Itoa(len(serverSaved)) + " servers")
 		}
-		for i:=0;i < len(serverSaved);i ++ {
+		for i := 0; i < len(serverSaved); i ++ {
 			fmt.Println(spaceH + spaceH + "ID:" + strconv.Itoa(i))
-			fmt.Println(spaceH + spaceH  + serverSaved[i].Name)
+			fmt.Println(spaceH + spaceH + serverSaved[i].Name)
 			var status string
 			switch serverSaved[i].Status {
 			case 0:
@@ -428,6 +440,9 @@ func processLocalCommand(c string){
 				status = "Running"
 			}
 			fmt.Println(spaceH + spaceH + "Status:" + status)
+
 		}
+		return
+
 	}
 }
