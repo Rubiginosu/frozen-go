@@ -3,7 +3,8 @@
 		"Servers": "../data/servers.json"
 	},
 	"Dsc": {
-		"Port": 52023,
+		"HttpPort": 52023,
+		"DataPort": 52025,
 		"VerifyCode": "Test"
 	}
 }

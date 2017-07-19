@@ -24,6 +24,7 @@ const FILE_CONFIGURATION string = "../conf/fg.json"
 var serverSaved []ServerLocal
 var config conf.Config
 var servers []ServerRun
+
 // SSC: ServerLocal Self Checking
 // Status CODE
 // 00
@@ -78,7 +79,6 @@ type HttpRequest struct {
 Command : List / Start / getStatus /
  */
 func main() {
-	//wg := sync.WaitGroup{}
 	if !(len(os.Args) > 1 && os.Args[1] == "-jump") {
 		printInfo()
 	}
@@ -88,9 +88,17 @@ func main() {
 	fmt.Println("Started Server Manager.")
 	fmt.Println("Online...")
 	go StartDaemonServer()
+	go func(){
+		fmt.Println("Command ready , type ? for help..")
+		for {
+			var s string
+			fmt.Scanf("%s",&s)
+			processLocalCommand(s)
+		}
+	}()
 	http.HandleFunc("/", httpMux)
-	http.HandleFunc("/fs/",fileServer)
-	http.ListenAndServe( /*:""+strconv.Itoa(config.Dsc.Port)*/ ":52023", nil)
+	http.ListenAndServe(":" + strconv.Itoa(config.Dsc.HttpPort) , nil)
+
 }
 
 // 命令处理器
@@ -103,17 +111,28 @@ func handleRequest(request Request) Response {
 		serverSaved = append(serverSaved, ServerLocal{len(serverSaved), request.Message, "", 0})
 		serverSaved[len(serverSaved)-1].EnvPrepare()
 		// 序列化b来储存。
-		b, _ := json.MarshalIndent(serverSaved, "", "\t")
+		b, err := json.MarshalIndent(serverSaved, "", "\t")
 
 		// 新创建的服务器写入data文件
-		ioutil.WriteFile(config.Smc.Servers, b, 0666)
-
+		err2 := ioutil.WriteFile(config.Smc.Servers, b, 0666)
+		if err2 != nil {
+			return Response{
+				-1,
+				err2.Error(),
+			}
+		}
+		if err != nil {
+			return Response{
+				-1,
+				err.Error(),
+			}
+		}
 		return Response{
 			0,
 			"OK",
 		}
 	case "Start":
-		// 操作ID
+		// 运行这个服务器
 		err := serverSaved[request.OperateID].Start()
 		if err == nil {
 			return Response{
@@ -158,7 +177,7 @@ func printInfo() {
 	time.Sleep(100 * time.Microsecond)
 	fmt.Print("Powered by ")
 	for _, v := range []byte("Axoford12") {
-		time.Sleep(300 * time.Millisecond)
+		time.Sleep(240 * time.Millisecond)
 		fmt.Print(string(v))
 	}
 	fmt.Println()
@@ -167,10 +186,11 @@ func printInfo() {
 	fmt.Println("---------------------")
 	time.Sleep(300 * time.Millisecond)
 	fmt.Println("version:" + VERSION)
+	time.Sleep(1 * time.Second)
 }
 
 func StartDaemonServer() {
-	ln, err := net.Listen("tcp", ":"+strconv.Itoa(config.Dsc.Port + 1)) // 默认使用tcp连接
+	ln, err := net.Listen("tcp", ":"+strconv.Itoa(config.Dsc.DataPort)) // 默认使用tcp连接
 	if err != nil {
 		panic(err)
 	} else {
@@ -226,6 +246,9 @@ func handleConnection(c net.Conn) {
 	request := Request{}
 	json.Unmarshal(line, &request)
 	if auth([]byte(request.Message)){
+		if serverSaved[request.OperateID].Status == 0 {
+			c.Close()
+		}
 		switch request.Method {
 		case "Input":
 			go func() {
@@ -239,6 +262,8 @@ func handleConnection(c net.Conn) {
 					io.Copy(c, servers[request.OperateID].Stdout)
 				}
 			}()
+		default:
+			c.Close()
 		}
 	}
 
@@ -246,18 +271,26 @@ func handleConnection(c net.Conn) {
 }
 
 func (server *ServerLocal) Start() error {
-	fmt.Println()
+	if server.Status == 1 {
+		return errors.New("Server already started.")
+	}
 	server.EnvPrepare()
 	serverRC, err := server.loadExecutableConfig()
 	if err != nil {
 		// 环境准备失败
 		return errors.New("Cannot prepare server env")
 	} else {
-		// 根据提供的EXEC名，搜寻绝对目录
-		execPath, isNoFound := exec.LookPath(serverRC.Command)
-		if isNoFound != nil {
-			return isNoFound // 没找到抛err
+		// 如果Command就是一个绝对路径，不再寻找。
+		execPath := serverRC.Command
+		if !filepath.IsAbs(serverRC.Command) {
+			var isNoFound error
+			execPath, isNoFound = exec.LookPath(serverRC.Command)
+			if isNoFound != nil {
+				return isNoFound // 没找到抛err
+			}
 		}
+		// 根据提供的EXEC名，搜寻绝对目录
+
 		nowPath, err := filepath.Abs(".")
 		if err != nil {
 			return errors.New(err.Error())
@@ -353,40 +386,48 @@ func (s *ServerRun) Close() {
 	s.Cmd.Process.Kill()
 	serverSaved[s.ID].Status = SERVER_STATUS_CLOSED
 }
-
-func fileServer(w http.ResponseWriter,r *http.Request){
-	response := Response{}
-	if r.Method != "POST" {
-		response = Response{
-			-1,
-			"Please use POST of file server",
+// 保存服务器信息
+func saveServerInfo() error{
+	b,err := json.Marshal(serverSaved)
+	if err != nil {
+		return err
+	}
+	ioutil.WriteFile(config.Smc.Servers,b,0664)
+	return nil
+}
+// 处理本地命令
+func processLocalCommand(c string){
+	switch c {
+	case "stop":
+		fmt.Println("Stopping")
+		saveServerInfo()
+		os.Exit(0)
+	case "?":
+		fmt.Println("FrozenGo" + VERSION + " Help Manual -- by Axoford12")
+		fmt.Println("stop: Stop the daemon.save server changes.")
+		fmt.Println("status: Echo server status.")
+		fmt.Println()
+	case "status":
+		spaceH := "|--"
+		switch len(serverSaved) {
+		case 0:
+			fmt.Println(spaceH + "There are no server.")
+		case 1:
+			fmt.Println(spaceH + "There is 1 server running")
+		default:
+			fmt.Println(spaceH + "There are " + strconv.Itoa(len(serverSaved)) + " servers")
 		}
-	} else {
-		err := r.ParseMultipartForm(10485760)
-		if err != nil {
-			response = Response{
-				-1,
-				err.Error(),
+		for i:=0;i < len(serverSaved);i ++ {
+			fmt.Println(spaceH + spaceH + "ID:" + strconv.Itoa(i))
+			fmt.Println(spaceH + spaceH  + serverSaved[i].Name)
+			var status string
+			switch serverSaved[i].Status {
+			case 0:
+				status = "Stopped"
+			case 1:
+				status = "Running"
 			}
-		} else {
-			// Parse Successfully
-			req := r.Form["req"][0]
-			request := Request{}
-			err = json.Unmarshal([]byte(req),&request)
-			file,_,err2 := r.FormFile(request.Message)
-			if err2 == nil{
-				f,_ := os.Create("../servers/server/" + strconv.Itoa(request.OperateID) + "/" + request.Message)
-				io.Copy(f,file)
-				response = Response{
-					0,"OK",
-				}
-			} else {
-				response = Response{
-					-1,err2.Error(),
-				}
-			}
+			fmt.Println(spaceH + spaceH + "Status:" + status)
 		}
 	}
-	b,_ := json.Marshal(response)
-	fmt.Fprintln(w,string(b))
 }

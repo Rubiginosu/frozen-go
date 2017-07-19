@@ -12,7 +12,8 @@ type Config struct {
 }
 
 type DaemonServerConfig struct {
-	Port       int
+	HttpPort   int
+	DataPort   int
 	VerifyCode string
 }
 
@@ -23,7 +24,7 @@ type serverManagerConfig struct {
 func GetConfig(filename string) (Config, error) {
 	file, err := os.Open(filename)
 	if err != nil {
-		return Config{}, err
+		GenerateConfig("../conf/fg.json")
 	}
 	var v Config
 	b, err2 := ioutil.ReadAll(file)
@@ -42,7 +43,7 @@ func GenerateConfig(filepath string) error {
 	}
 	var v Config = Config{
 		serverManagerConfig{"../data/servers.json"},
-		DaemonServerConfig{52023,"Test"}, // 为何选择52023？俺觉得23号这个妹纸很可爱啊
+		DaemonServerConfig{52023, 52025,"Test"}, // 为何选择52023？俺觉得23号这个妹纸很可爱啊
 	}
 	s, _ := json.MarshalIndent(v, "", "\t")
 	file.Write(s)
