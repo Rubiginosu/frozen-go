@@ -7,7 +7,7 @@
 >我们不比欧洲人差什么，没必要研究破解一个收费软件。<br />
 ## 2. 安装 
 >本软件正在开发中，于7月16日开始原生Panel部分编写。<br />
->如果您希望自己开发panel或对daemon进行内部测试欢迎进入[Release](https://github.com/Rubiginosu/frozen-go/release)下载最新版<br />
+>如果您希望自己开发panel或对daemon进行内部测试欢迎进入[Release](https://github.com/Rubiginosu/frozen-go/releases)下载最新版<br />
 ## 3. 使用要求
 >出于多方面考虑，以及多方妥协下的结果，我们对使用FrozenGo的用户有以下强制要求：<br />
 >服务器请务必预先安装：Apache2、Postgresql9.6、php7<br />
