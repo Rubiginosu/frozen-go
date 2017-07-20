@@ -13,9 +13,7 @@ import (
 	"os/exec"
 	"errors"
 	"path/filepath"
-	"net/http"
 	"crypto/sha256"
-	"bufio"
 )
 
 const VERSION string = "v0.0 Alpha 0x00d"
@@ -70,7 +68,7 @@ type Response struct {
 	Message string
 }
 
-type HttpRequest struct {
+type InterfaceRequest struct {
 	Auth string
 	Req  Request
 }
@@ -87,15 +85,12 @@ func main() {
 	json.Unmarshal(b, &serverSaved)
 	fmt.Println("Started Server Manager.")
 	fmt.Println("Online...")
+	handleRequest(Request{"Start",0,""})
 	go StartDaemonServer()
-
-	http.HandleFunc("/", httpMux)
-	go http.ListenAndServe(":"+strconv.Itoa(config.Dsc.HttpPort), nil)
-
 	fmt.Println("Done,type \"?\" for help. ")
 	for {
 		var s string
-		fmt.Scanf("%s",&s)
+		fmt.Scanf("%s", &s)
 		processLocalCommand(s)
 	}
 }
@@ -212,65 +207,67 @@ func StartDaemonServer() {
 
 }
 
-func httpMux(w http.ResponseWriter, r *http.Request) {
-	r.ParseForm()
-	response := Response{}
-	if v, ok := r.Form["req"]; ok {
-		request := HttpRequest{}
-		err := json.Unmarshal([]byte(v[0]), &request)
-		if err != nil {
-			response = Response{-1, err.Error()}
-		} else {
-			if auth([]byte(request.Auth)) {
-				response = handleRequest(request.Req)
-			} else {
-				response = Response{-1, "Auth Failed."}
-			}
-		}
-	} else {
-		response = Response{-1, "Cannot parse json code,please check."}
-	}
-	res, _ := json.Marshal(response)
-	fmt.Fprintln(w, string(res))
-}
-
-func auth(src []byte) bool {
+func auth(src InterfaceRequest) bool {
 	dst := sha256.Sum256([]byte(config.Dsc.VerifyCode))
-	auth := sha256.Sum256(src)
+	auth := sha256.Sum256([]byte(src.Auth))
 	return dst == auth
 }
 
 func handleConnection(c net.Conn) {
-	reader := bufio.NewReader(c)
-	line, err := reader.ReadBytes('\n')
-	for {
-		line, err = reader.ReadBytes('\n')
-		if err != nil || err == io.EOF {
-			break
-		}
+	buf := make([]byte, config.DefaultBufLength)
+	length, _ := c.Read(buf)
+	request := InterfaceRequest{}
+	err := json.Unmarshal(buf[:length], &request)
+	if err != nil {
+		res, _ := json.Marshal(Response{-1, err.Error(), })
+		c.Write(res)
+		c.Close()
 	}
-	request := Request{}
-	json.Unmarshal(line, &request)
-	if auth([]byte(request.Message)) {
-		if serverSaved[request.OperateID].Status == 0 {
+	if auth(request) {
+		fmt.Fprintln(c, "Auth succeeded!")
+		if request.Req.Method == "GetInput" {
+			// 判断输入的有效性
+			if request.Req.OperateID > len(serverSaved)-1 {
+				res, _ := json.Marshal(Response{-1, "Invalid argument : OperateID", })
+				c.Write(res)
+				c.Close()
+			} else if serverSaved[request.Req.OperateID].Status != 1 {
+				res, _ := json.Marshal(Response{-1, "Server not started", })
+				c.Write(res)
+				c.Close()
+			} else {
+				for {
+					io.Copy(servers[request.Req.OperateID].Stdin,c)
+				}
+			}
+		} else if request.Req.Method == "GetOutput" {
+
+			if request.Req.OperateID > len(serverSaved)-1 {
+				res, _ := json.Marshal(Response{-1, "Invalid argument : OperateID", })
+				c.Write(res)
+				c.Close()
+			} else if serverSaved[request.Req.OperateID].Status != 1 {
+				res, _ := json.Marshal(Response{-1, "Server not started", })
+				c.Write(res)
+				c.Close()
+			} else {
+				for {
+					io.Copy(c, servers[request.Req.OperateID].Stdout)
+				}
+			}
+
+		} else {
+			response := handleRequest(request.Req)
+			res, _ := json.Marshal(response)
+			c.Write(res)
 			c.Close()
 		}
-		switch request.Method {
-		case "Input":
-			go func() {
-				for {
-					io.Copy(servers[request.OperateID].Stdin, c)
-				}
-			}()
-		case "Output":
-			go func() {
-				for {
-					io.Copy(c, servers[request.OperateID].Stdout)
-				}
-			}()
-		default:
-			c.Close()
-		}
+
+	} else {
+		res, _ := json.Marshal(Response{-1, "Auth failed", })
+		c.Write(res)
+		c.Close()
+		return
 	}
 
 }
@@ -411,7 +408,13 @@ func saveServerInfo() error {
 func processLocalCommand(c string) {
 	switch c {
 	case "stop":
+
 		fmt.Println("Stopping")
+		for i:=0;i<len(serverSaved);i++{
+			if serverSaved[i].Status == 1 {
+				servers[i].Cmd.Process.Kill()
+			}
+		}
 		saveServerInfo()
 		os.Exit(0)
 	case "?":

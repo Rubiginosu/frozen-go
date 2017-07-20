@@ -6,5 +6,6 @@
 		"HttpPort": 52023,
 		"DataPort": 52025,
 		"VerifyCode": "Test"
-	}
+	},
+	"DefaultBufLength": 256
 }
