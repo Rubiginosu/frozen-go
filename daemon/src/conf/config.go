@@ -13,8 +13,7 @@ type Config struct {
 }
 
 type DaemonServerConfig struct {
-	HttpPort   int
-	DataPort   int
+	Port   int
 	VerifyCode string
 }
 
@@ -44,7 +43,7 @@ func GenerateConfig(filepath string) error {
 	}
 	var v Config = Config{
 		serverManagerConfig{"../data/servers.json"},
-		DaemonServerConfig{52023, 52025, "Test"}, // 为何选择52023？俺觉得23号这个妹纸很可爱啊
+		DaemonServerConfig{52023, "Test"}, // 为何选择52023？俺觉得23号这个妹纸很可爱啊
 		256,
 	}
 	s, _ := json.MarshalIndent(v, "", "\t")

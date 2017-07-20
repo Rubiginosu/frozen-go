@@ -191,7 +191,7 @@ func printInfo() {
 }
 
 func StartDaemonServer() {
-	ln, err := net.Listen("tcp", ":"+strconv.Itoa(config.Dsc.DataPort)) // 默认使用tcp连接
+	ln, err := net.Listen("tcp", ":"+strconv.Itoa(config.Dsc.Port)) // 默认使用tcp连接
 	if err != nil {
 		panic(err)
 	} else {

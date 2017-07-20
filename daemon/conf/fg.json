@@ -3,8 +3,7 @@
 		"Servers": "../data/servers.json"
 	},
 	"Dsc": {
-		"HttpPort": 52023,
-		"DataPort": 52025,
+		"Port": 52023,
 		"VerifyCode": "Test"
 	},
 	"DefaultBufLength": 256
