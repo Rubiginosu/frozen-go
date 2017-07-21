@@ -16,7 +16,7 @@ import (
 	"crypto/sha256"
 )
 
-const VERSION string = "v0.1.1_Alpha"
+const VERSION string = "v0.2.0_Alpha"
 const FILE_CONFIGURATION string = "../conf/fg.json"
 
 var serverSaved []ServerLocal
