@@ -14,3 +14,7 @@
 Route::get('/', function () {
     return view('welcome');
 });
+
+Route::get('/index','FaceController@index');//将初始请求接入此处
+
+?>
