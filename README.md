@@ -32,7 +32,7 @@
 >我们想为中国客观培养一些创新型人才，我们是中国人 ！/We are chinese！<br />
 
 ## 6. 感想  
->MC这个游戏，我们非常喜欢，也看了她的茁壮成长，看了她的优秀。<br />
+>MC这个<>游戏，我们非常喜欢，也看了她的茁壮成长，看了她的优秀。<br />
 >为什么要开源？虽然我有时候觉得，自己辛辛苦苦写个软件，却被别人拿去赚钱。<br />
 >挺伤感的。但是，我们还是相信，中国需要创新的程序员。<br />
 >而不是想去当破解别人收费软件，践踏别人心血的Cracker 。因为我们完全有能力自己做，<br />
@@ -43,17 +43,17 @@
 >这款软件是公益性质的，不是用来赚取利润的。我们只会在特殊的地方收取极低的费用，这笔费用是一位数且为人民币。<br/>
 >希望对这个项目有兴趣的同志能联系到我们，告诉我们一些建议，这将会在程序的开发上帮助我们不少。<br/>
 >End`
-:tada: 
-##操作系统兼容性测试
->Windows:
->>windows7：daemon可运行
->>windows server 2008：daemon可运行
->>windows server 2012：daemon可运行
->Linux
->>debian：daemon可运行
->>CentOS:daemon可运行
->>deepin桌面版：daemon可运行，严禁安装panel
->>deepin服务器版：可运行
->>ubuntu：可运行，衍生版kubuntu无法运行
->>SUSE:未测试
->>openSUSE：未测试
+:tada: <br />
+##8.操作系统兼容性测试
+>Windows:<br/>
+>>windows7：daemon可运行<br />
+>>windows server 2008：daemon可运行<br />
+>>windows server 2012：daemon可运行<br />
+>Linux<br />
+>>debian：daemon可运行<br />
+>>CentOS:daemon可运行<br />
+>>deepin桌面版：daemon可运行，严禁安装panel<br />
+>>deepin服务器版：可运行<br />
+>>ubuntu：可运行，衍生版kubuntu无法运行<br />
+>>SUSE:未测试<br />
+>>openSUSE：未测试<br />
