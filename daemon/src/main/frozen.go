@@ -16,22 +16,18 @@ import (
 	"crypto/sha256"
 )
 
-const VERSION string = "v0.0 Alpha 0x00d"
+const VERSION string = "v0.2.0_Alpha"
 const FILE_CONFIGURATION string = "../conf/fg.json"
 
 var serverSaved []ServerLocal
 var config conf.Config
 var servers []ServerRun
+var ValidationKeyPairs []ValidationKeyPairTime
 
-// SSC: ServerLocal Self Checking
-// Status CODE
-// 00
-// 二进制表示
 const SSC_NO_CONFIG_FILE int = -1
 const SSC_NO_SERVER_DIR = -2
 
 // 服务器状态码
-
 // 已经关闭
 const SERVER_STATUS_CLOSED = 0
 
@@ -73,6 +69,15 @@ type InterfaceRequest struct {
 	Req  Request
 }
 
+type ValidationKeyPairTime struct {
+	ValidationKeyPair ValidationKeyPair
+	GeneratedTime     time.Time
+}
+type ValidationKeyPair struct {
+	ID  int // 该ID对应服务器。
+	Key string
+}
+
 /*
 Command : List / Start / getStatus /
  */
@@ -81,12 +86,13 @@ func main() {
 		printInfo()
 	}
 	config, _ = conf.GetConfig(FILE_CONFIGURATION)
-	b, _ := ioutil.ReadFile(config.Smc.Servers)
+	b, _ := ioutil.ReadFile(config.ServerManagerConfig.Servers)
 	json.Unmarshal(b, &serverSaved)
 	fmt.Println("Started Server Manager.")
 	fmt.Println("Online...")
-	handleRequest(Request{"Start",0,""})
+	handleRequest(Request{"Start", 0, ""})
 	go StartDaemonServer()
+	go validationKeyUpdate()
 	fmt.Println("Done,type \"?\" for help. ")
 	for {
 		var s string
@@ -108,7 +114,7 @@ func handleRequest(request Request) Response {
 		b, err := json.MarshalIndent(serverSaved, "", "\t")
 
 		// 新创建的服务器写入data文件
-		err2 := ioutil.WriteFile(config.Smc.Servers, b, 0666)
+		err2 := ioutil.WriteFile(config.ServerManagerConfig.Servers, b, 0666)
 		if err2 != nil {
 			return Response{
 				-1,
@@ -156,6 +162,25 @@ func handleRequest(request Request) Response {
 		return Response{
 			0, "OK",
 		}
+
+	case "GetPairs":
+		if request.OperateID > len(serverSaved)-1 {
+			return Response{
+				-1, "Invalid server id",
+			}
+		}
+		for i := 0; i < len(ValidationKeyPairs); i++ {
+			if ValidationKeyPairs[i].ValidationKeyPair.ID == request.OperateID {
+				responseData, _ := json.Marshal(ValidationKeyPairs[i].ValidationKeyPair)
+				return Response{
+					0, string(responseData),
+				}
+			}
+		}
+		// 未找到已经存在的ValidationKey
+		// 为请求者生成ValidationKey
+		responseData, _ := json.Marshal(validationKeyGenerate(request.OperateID))
+		return Response{0, string(responseData)}
 	}
 	return Response{
 		-1, "Unexpected err",
@@ -191,7 +216,7 @@ func printInfo() {
 }
 
 func StartDaemonServer() {
-	ln, err := net.Listen("tcp", ":"+strconv.Itoa(config.Dsc.Port)) // 默认使用tcp连接
+	ln, err := net.Listen("tcp", ":"+strconv.Itoa(config.DaemonServerConfig.Port)) // 默认使用tcp连接
 	if err != nil {
 		panic(err)
 	} else {
@@ -208,66 +233,51 @@ func StartDaemonServer() {
 }
 
 func auth(src InterfaceRequest) bool {
-	dst := sha256.Sum256([]byte(config.Dsc.VerifyCode))
+	dst := sha256.Sum256([]byte(config.DaemonServerConfig.VerifyCode))
 	auth := sha256.Sum256([]byte(src.Auth))
 	return dst == auth
 }
 
+func userAuth(userServerID int, dst string, index int) bool {
+	var src string
+	if ValidationKeyPairs[index].ValidationKeyPair.ID != userServerID {
+		return false
+	}
+	src = ValidationKeyPairs[index].ValidationKeyPair.Key
+	sumSrc := sha256.Sum256([]byte(src))
+	sumDst := sha256.Sum256([]byte(dst))
+	if sumDst == sumSrc {
+		return true
+	}
+	return false
+}
+
 func handleConnection(c net.Conn) {
-	buf := make([]byte, config.DefaultBufLength)
+	buf := make([]byte, config.DaemonServerConfig.DefaultBufLength)
 	length, _ := c.Read(buf)
 	request := InterfaceRequest{}
 	err := json.Unmarshal(buf[:length], &request)
 	if err != nil {
-		res, _ := json.Marshal(Response{-1, err.Error(), })
-		c.Write(res)
-		c.Close()
+		connErrorToExit(err.Error(),c)
 	}
-	if auth(request) {
-		fmt.Fprintln(c, "Auth succeeded!")
-		if request.Req.Method == "GetInput" {
-			// 判断输入的有效性
-			if request.Req.OperateID > len(serverSaved)-1 {
-				res, _ := json.Marshal(Response{-1, "Invalid argument : OperateID", })
-				c.Write(res)
-				c.Close()
-			} else if serverSaved[request.Req.OperateID].Status != 1 {
-				res, _ := json.Marshal(Response{-1, "Server not started", })
-				c.Write(res)
-				c.Close()
-			} else {
-				for {
-					io.Copy(servers[request.Req.OperateID].Stdin,c)
-				}
+	if request.Req.Method == "GetInput" {
+		if ioCheck(request,c) {
+			for{
+				io.Copy(servers[request.Req.OperateID].Stdin,c)
 			}
-		} else if request.Req.Method == "GetOutput" {
-
-			if request.Req.OperateID > len(serverSaved)-1 {
-				res, _ := json.Marshal(Response{-1, "Invalid argument : OperateID", })
-				c.Write(res)
-				c.Close()
-			} else if serverSaved[request.Req.OperateID].Status != 1 {
-				res, _ := json.Marshal(Response{-1, "Server not started", })
-				c.Write(res)
-				c.Close()
-			} else {
-				for {
-					io.Copy(c, servers[request.Req.OperateID].Stdout)
-				}
-			}
-
-		} else {
-			response := handleRequest(request.Req)
-			res, _ := json.Marshal(response)
-			c.Write(res)
-			c.Close()
 		}
 
-	} else {
-		res, _ := json.Marshal(Response{-1, "Auth failed", })
+	} else if request.Req.Method == "GetOutput" {
+		if ioCheck(request,c) {
+			for {
+				io.Copy(c,servers[request.Req.OperateID].Stdout)
+			}
+		}
+	} else if auth(request){
+		res,_ := json.Marshal(handleRequest(request.Req))
 		c.Write(res)
-		c.Close()
-		return
+	} else {
+		connErrorToExit("Auth failed.",c)
 	}
 
 }
@@ -400,7 +410,7 @@ func saveServerInfo() error {
 	if err != nil {
 		return err
 	}
-	ioutil.WriteFile(config.Smc.Servers, b, 0664)
+	ioutil.WriteFile(config.ServerManagerConfig.Servers, b, 0664)
 	return nil
 }
 
@@ -410,7 +420,7 @@ func processLocalCommand(c string) {
 	case "stop":
 
 		fmt.Println("Stopping")
-		for i:=0;i<len(serverSaved);i++{
+		for i := 0; i < len(serverSaved); i++ {
 			if serverSaved[i].Status == 1 {
 				servers[i].Cmd.Process.Kill()
 			}
@@ -447,5 +457,86 @@ func processLocalCommand(c string) {
 		}
 		return
 
+	}
+}
+
+// 该函数用于清理某些没用的ValidationKey，腾开内存。
+func validationKeyClear() {
+	j := 0
+	i := 0
+	for k := j; k < len(ValidationKeyPairs); k++ {
+		if isValidationKeyAvailable(ValidationKeyPairs[k]) {
+			// swap [swapper] and [k]
+			temp := ValidationKeyPairs[i]
+			ValidationKeyPairs[i] = ValidationKeyPairs[k]
+			ValidationKeyPairs[k] = temp
+			// i指针自增
+			i++
+		}
+	}
+	ValidationKeyPairs = ValidationKeyPairs[i:]
+}
+
+func isValidationKeyAvailable(pair ValidationKeyPairTime) bool {
+	return time.Since(pair.GeneratedTime).Seconds() > config.DaemonServerConfig.ValidationKeyOutDateTimeSeconds
+}
+
+func validationKeyUpdate() {
+	for {
+		validationKeyClear()
+		time.Sleep(300 * time.Second)
+	}
+}
+
+func validationKeyGenerate(id int) ValidationKeyPairTime {
+	pair := ValidationKeyPairTime{ValidationKeyPair{id, conf.RandString(20)}, time.Now()}
+	ValidationKeyPairs = append(ValidationKeyPairs, pair)
+	return pair
+}
+
+func findValidationKey(target int) int {
+	for i := 0; i < len(ValidationKeyPairs); i++ {
+		if ValidationKeyPairs[i].ValidationKeyPair.ID == target {
+			return i
+		}
+	}
+	return -1
+}
+
+func connErrorToExit(errorInfo string, c net.Conn) {
+	res, _ := json.Marshal(Response{-1, errorInfo})
+	c.Write(res)
+	c.Close()
+}
+
+/*
+用于判断索引为serverId 的服务器是否在运行之中。
+ */
+func isServerRunning(serverId int) bool {
+	if serverId > len(serverSaved)-1 || serverId > len(servers)-1 {
+		return false
+	} else if serverSaved[serverId].Status != 1 {
+		return false
+	} else {
+		return true
+	}
+}
+
+func ioCheck(request InterfaceRequest,c net.Conn) bool{
+	if index := findValidationKey(request.Req.OperateID); index >= 0 {
+		if userAuth(request.Req.OperateID, request.Auth, index) {
+			if isServerRunning(request.Req.OperateID) {
+				return true
+			} else {
+				connErrorToExit("Server not running or Invalid ServerID", c)
+				return false
+			}
+		} else {
+			connErrorToExit("Auth Failed", c)
+			return false
+		}
+	} else {
+		connErrorToExit("OperateID not exist in ValidationPairs.", c)
+		return false
 	}
 }

@@ -1,10 +1,11 @@
 {
-	"Smc": {
+	"ServerManagerConfig": {
 		"Servers": "../data/servers.json"
 	},
-	"Dsc": {
+	"DaemonServerConfig": {
 		"Port": 52023,
-		"VerifyCode": "Test"
-	},
-	"DefaultBufLength": 256
+		"VerifyCode": "bXE3lBzk4wQ9ApdP522c",
+		"DefaultBufLength": 256,
+		"ValidationKeyOutDateTimeSeconds": 20
+	}
 }
