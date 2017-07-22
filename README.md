@@ -44,3 +44,16 @@
 >希望对这个项目有兴趣的同志能联系到我们，告诉我们一些建议，这将会在程序的开发上帮助我们不少。<br/>
 >End`
 :tada: 
+##操作系统兼容性测试
+>Windows:
+>>windows7：daemon可运行
+>>windows server 2008：daemon可运行
+>>windows server 2012：daemon可运行
+>Linux
+>>debian：daemon可运行
+>>CentOS:daemon可运行
+>>deepin桌面版：daemon可运行，严禁安装panel
+>>deepin服务器版：可运行
+>>ubuntu：可运行，衍生版kubuntu无法运行
+>>SUSE:未测试
+>>openSUSE：未测试
