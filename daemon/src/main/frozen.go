@@ -302,7 +302,6 @@ func (server *ServerLocal) Start() error {
 			}
 		}
 		// 根据提供的EXEC名，搜寻绝对目录
-
 		nowPath, err := filepath.Abs(".")
 		if err != nil {
 			return errors.New(err.Error())
@@ -489,7 +488,13 @@ func validationKeyUpdate() {
 }
 
 func validationKeyGenerate(id int) ValidationKeyPairTime {
-	pair := ValidationKeyPairTime{ValidationKeyPair{id, conf.RandString(20)}, time.Now()}
+	pair := ValidationKeyPairTime{
+		ValidationKeyPair{
+			id,
+			conf.RandString(20),
+		},
+		time.Now(),
+	}
 	ValidationKeyPairs = append(ValidationKeyPairs, pair)
 	return pair
 }
@@ -521,12 +526,17 @@ func isServerRunning(serverId int) bool {
 		return true
 	}
 }
-
+/*
+测试服务器的标准输入输出流是否可用。
+ */
 func ioCheck(request InterfaceRequest,c net.Conn) bool{
+	// 判定OpeareID的Key是否有效
 	if index := findValidationKey(request.Req.OperateID); index >= 0 {
+		// 发送给User认证
 		if userAuth(request.Req.OperateID, request.Auth, index) {
 			if isServerRunning(request.Req.OperateID) {
 				return true
+				// 所有条件满足，返回True
 			} else {
 				connErrorToExit("Server not running or Invalid ServerID", c)
 				return false
@@ -540,3 +550,4 @@ func ioCheck(request InterfaceRequest,c net.Conn) bool{
 		return false
 	}
 }
+

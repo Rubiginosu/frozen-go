@@ -2,6 +2,6 @@
 	"Command": "java",
 	"Args": [
 		"-jar",
-		"Minecraft.jar"
+		"../../exec/Minecraft.jar"
 	]
 }
