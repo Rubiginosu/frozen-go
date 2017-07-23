@@ -23,14 +23,14 @@ func saveServerInfo(config conf.Config) error {
 	if err != nil {
 		return err
 	}
-	ioutil.WriteFile(config.ServerManagerConfig.Servers, b, 0664)
+	ioutil.WriteFile(config.ServerManager.Servers, b, 0664)
 	return nil
 }
 
 // 处理本地命令
 
 func handleConnection(c net.Conn,config conf.Config,pairs []auth.ValidationKeyPairTime) {
-	buf := make([]byte, config.DaemonServerConfig.DefaultBufLength)
+	buf := make([]byte, config.DaemonServer.DefaultBufLength)
 	length, _ := c.Read(buf)
 	request := InterfaceRequest{}
 	err := json.Unmarshal(buf[:length], &request)
@@ -50,7 +50,7 @@ func handleConnection(c net.Conn,config conf.Config,pairs []auth.ValidationKeyPa
 				io.Copy(c,servers[request.Req.OperateID].Stdout)
 			}
 		}
-	} else if auth.Auth([]byte(request.Auth),[]byte(config.DaemonServerConfig.VerifyCode)){
+	} else if auth.Auth([]byte(request.Auth),[]byte(config.DaemonServer.VerifyCode)){
 		res,_ := json.Marshal(handleRequest(request.Req,pairs,config))
 		c.Write(res)
 	} else {
@@ -71,7 +71,7 @@ func handleRequest(request Request, pairs []auth.ValidationKeyPairTime,config co
 		b, err := json.MarshalIndent(serverSaved, "", "\t")
 
 		// 新创建的服务器写入data文件
-		err2 := ioutil.WriteFile(config.ServerManagerConfig.Servers, b, 0666)
+		err2 := ioutil.WriteFile(config.ServerManager.Servers, b, 0666)
 		if err2 != nil {
 			return Response{
 				-1,

@@ -69,9 +69,9 @@ func ioCheck(pairs []auth.ValidationKeyPairTime,request InterfaceRequest,c net.C
 }
 
 func StartDaemonServer(config conf.Config,pairs []auth.ValidationKeyPairTime) {
-	b, _ := ioutil.ReadFile(config.ServerManagerConfig.Servers)
+	b, _ := ioutil.ReadFile(config.ServerManager.Servers)
 	json.Unmarshal(b, &serverSaved)
-	ln, err := net.Listen("tcp", ":"+strconv.Itoa(config.DaemonServerConfig.Port)) // 默认使用tcp连接
+	ln, err := net.Listen("tcp", ":"+strconv.Itoa(config.DaemonServer.Port)) // 默认使用tcp连接
 	if err != nil {
 		panic(err)
 	} else {
