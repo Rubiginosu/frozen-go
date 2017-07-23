@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"io"
 	"auth"
+	"os"
 )
 
 func getMessage(c net.Conn) []byte{
@@ -29,3 +30,12 @@ func parseCommandArg(data []byte) *Command{
 	return &Command{string(data[:4]),string(data[5:])}
 }
 
+func parseFileInfoToLocalFile(f os.FileInfo) localServerFile{
+	return localServerFile{
+		f.Name(),
+		f.Mode().String(),
+		f.IsDir(),
+		f.Size(),
+		f.ModTime().Unix(),
+	}
+}

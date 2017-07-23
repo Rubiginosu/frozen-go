@@ -10,8 +10,6 @@ const (
 	SERVER_WELCOME = "001 Frozen Go Server OK."
 	SERvER_PLEASE_AUTH = "401 Please Auth at first."
 	SERVER_AUTH_FAILED = "402 Server Auth Failed"
-
-
 )
 
 func ListenAndServe(conf conf.Config){
