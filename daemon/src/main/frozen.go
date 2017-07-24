@@ -6,7 +6,6 @@ import (
 	"time"
 	"auth"
 	"dmserver"
-	"filetrans"
 	"os"
 )
 
@@ -29,7 +28,7 @@ func main() {
 
 	fmt.Println("Starting Server Manager.")
 	go dmserver.StartDaemonServer(config)
-	go filetrans.ListenAndServe(config)
+	//go filetrans.ListenAndServe(config)
 	fmt.Println("Starting ValidationKeyUpdater.")
 	go auth.ValidationKeyUpdate(config.DaemonServer.ValidationKeyOutDateTimeSeconds)
 	fmt.Println("Done,type \"?\" for help. ")

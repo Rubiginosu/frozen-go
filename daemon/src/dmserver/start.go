@@ -68,7 +68,8 @@ func ioCheck(request InterfaceRequest,c net.Conn) bool{
 	}
 }
 
-func StartDaemonServer(config conf.Config) {
+func StartDaemonServer(conf conf.Config) {
+	config = conf
 	b, _ := ioutil.ReadFile(config.ServerManager.Servers)
 	json.Unmarshal(b, &serverSaved)
 	ln, err := net.Listen("tcp", ":"+strconv.Itoa(config.DaemonServer.Port)) // 默认使用tcp连接

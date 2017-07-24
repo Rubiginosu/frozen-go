@@ -30,7 +30,7 @@ func saveServerInfo() error {
 // 处理本地命令
 
 func handleConnection(c net.Conn) {
-	buf := make([]byte, config.DaemonServer.DefaultBufLength)
+	buf := make([]byte,config.DaemonServer.DefaultBufLength)
 	length, _ := c.Read(buf)
 	request := InterfaceRequest{}
 	err := json.Unmarshal(buf[:length], &request)
@@ -129,7 +129,7 @@ func handleRequest(request Request) Response {
 		}
 		for i := 0; i < len(pairs); i++ {
 			if pairs[i].ValidationKeyPair.ID == request.OperateID {
-				responseData, _ := json.Marshal(pairs[i].ValidationKeyPair)
+				responseData, _ := json.Marshal(pairs[i])
 				return Response{
 					0, string(responseData),
 				}
