@@ -92,7 +92,7 @@ func (server *ServerLocal) Start() error {
 	serverRC, err := server.loadExecutableConfig()
 	if err != nil {
 		// 环境准备失败
-		return errors.New("Cannot prepare server env")
+		return errors.New("Cannot prepare server env(exec file not found!")
 	} else {
 		// 如果Command就是一个绝对路径，不再寻找。
 		execPath := serverRC.Command
