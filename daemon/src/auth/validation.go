@@ -4,7 +4,7 @@ import (
 	"conf"
 	"time"
 )
-
+var ValidationKeyPairs []ValidationKeyPairTime
 func ValidationKeyGenerate(id int) ValidationKeyPairTime {
 	pair := ValidationKeyPairTime{
 		ValidationKeyPair:ValidationKeyPair{
@@ -15,37 +15,47 @@ func ValidationKeyGenerate(id int) ValidationKeyPairTime {
 	}
 	return pair
 }
-func ValidationKeyUpdate(pairs []ValidationKeyPairTime,outDateSeconds float64) {
+func ValidationKeyUpdate(outDateSeconds float64) {
 	for {
-		validationKeyClear(pairs,outDateSeconds)
+		validationKeyClear(outDateSeconds)
 		time.Sleep(300 * time.Second)
 	}
 }
-func validationKeyClear(pairs []ValidationKeyPairTime,outDateSeconds float64) {
+func validationKeyClear(outDateSeconds float64) {
 	j := 0
 	i := 0
-	for k := j; k < len(pairs); k++ {
-		if isValidationKeyAvailable(pairs[k],outDateSeconds) {
+	for k := j; k < len(ValidationKeyPairs); k++ {
+		if isValidationKeyAvailable(ValidationKeyPairs[k],outDateSeconds) {
 			// swap [swapper] and [k]
-			temp := pairs[i]
-			pairs[i] = pairs[k]
-			pairs[k] = temp
+			temp := ValidationKeyPairs[i]
+			ValidationKeyPairs[i] = ValidationKeyPairs[k]
+			ValidationKeyPairs[k] = temp
 			// i指针自增
 			i++
 		}
 	}
-	pairs = pairs[i:]
+	ValidationKeyPairs = ValidationKeyPairs[i:]
 }
 
-func isValidationKeyAvailable(pair ValidationKeyPairTime,outDateSeconds float64) bool {
-	return time.Since(pair.GeneratedTime).Seconds() > outDateSeconds
+func isValidationKeyAvailable(pairs ValidationKeyPairTime,outDateSeconds float64) bool {
+	return time.Since(pairs.GeneratedTime).Seconds() > outDateSeconds
 }
 
-func FindValidationKey(pairs []ValidationKeyPairTime,target int) int {
-	for i := 0; i < len(pairs); i++ {
-		if pairs[i].ValidationKeyPair.ID == target {
+func FindValidationKey(target int) int {
+	for i := 0; i < len(ValidationKeyPairs); i++ {
+		if ValidationKeyPairs[i].ValidationKeyPair.ID == target {
 			return i
 		}
 	}
 	return -1
+}
+
+func GetValidationKeyPairs() []ValidationKeyPairTime {
+	return ValidationKeyPairs
+}
+func IsVerifiedValidationKeyPair(id int,key string) bool{
+	if i := FindValidationKey(id);i > -1 {
+		return ValidationKeyPairs[i].ValidationKeyPair.Key == key && ValidationKeyPairs[i].ValidationKeyPair.ID == id
+	}
+	return false
 }

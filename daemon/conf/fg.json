@@ -9,7 +9,6 @@
 		"ValidationKeyOutDateTimeSeconds": 20
 	},
 	"FileTransportServer": {
-		"Port": 52025,
-		"VerifyCode": "w5SIPlzIip6c7K2yMFC4"
+		"Port": 52025
 	}
 }

@@ -3,17 +3,18 @@ package main
 import (
 	"fmt"
 	"conf"
-	"os"
 	"time"
 	"auth"
 	"dmserver"
+	"filetrans"
+	"os"
 )
 
 const VERSION string = "v0.2.0_Alpha"
 const FILE_CONFIGURATION string = "../conf/fg.json"
 
 var config conf.Config
-var ValidationKeyPairs []auth.ValidationKeyPairTime
+
 
 /*
 Command : List / Start / getStatus /
@@ -27,9 +28,10 @@ func main() {
 	fmt.Println("Config get done.")
 
 	fmt.Println("Starting Server Manager.")
-	go dmserver.StartDaemonServer(config, ValidationKeyPairs)
+	go dmserver.StartDaemonServer(config)
+	go filetrans.ListenAndServe(config)
 	fmt.Println("Starting ValidationKeyUpdater.")
-	go auth.ValidationKeyUpdate(ValidationKeyPairs, config.DaemonServer.ValidationKeyOutDateTimeSeconds)
+	go auth.ValidationKeyUpdate(config.DaemonServer.ValidationKeyOutDateTimeSeconds)
 	fmt.Println("Done,type \"?\" for help. ")
 	for {
 		var s string

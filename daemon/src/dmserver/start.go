@@ -46,11 +46,11 @@ func isServerRunning(serverId int,serverSaved []ServerLocal) bool {
 /*
 测试服务器的标准输入输出流是否可用。
  */
-func ioCheck(pairs []auth.ValidationKeyPairTime,request InterfaceRequest,c net.Conn) bool{
+func ioCheck(request InterfaceRequest,c net.Conn) bool{
 	// 判定OpeareID的Key是否有效
-	if index := auth.FindValidationKey(pairs,request.Req.OperateID); index >= 0 {
+	if index := auth.FindValidationKey(request.Req.OperateID); index >= 0 {
 		// 发送给User认证
-		if auth.UserAuth(request.Req.OperateID, request.Auth, index,pairs) {
+		if auth.UserAuth(request.Req.OperateID, request.Auth, index,) {
 			if isServerRunning(request.Req.OperateID,serverSaved) {
 				return true
 				// 所有条件满足，返回True
@@ -68,7 +68,7 @@ func ioCheck(pairs []auth.ValidationKeyPairTime,request InterfaceRequest,c net.C
 	}
 }
 
-func StartDaemonServer(config conf.Config,pairs []auth.ValidationKeyPairTime) {
+func StartDaemonServer(config conf.Config) {
 	b, _ := ioutil.ReadFile(config.ServerManager.Servers)
 	json.Unmarshal(b, &serverSaved)
 	ln, err := net.Listen("tcp", ":"+strconv.Itoa(config.DaemonServer.Port)) // 默认使用tcp连接
@@ -81,7 +81,7 @@ func StartDaemonServer(config conf.Config,pairs []auth.ValidationKeyPairTime) {
 			if err != nil {
 				continue
 			}
-			go handleConnection(conn,config,pairs)
+			go handleConnection(conn)
 		}
 	}
 
@@ -93,5 +93,5 @@ func StopDaemonServer(config conf.Config) error{
 	for i:=0;i<len(serverSaved);i++{
 		serverSaved[i].Status = 0
 	}
-	return saveServerInfo(config)
+	return saveServerInfo()
 }

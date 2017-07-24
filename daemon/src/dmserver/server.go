@@ -20,6 +20,7 @@ const SERVER_STATUS_CLOSED = 0
 
 // 正在运行
 const SERVER_STATUS_RUNNING = 1
+
 func (server *ServerLocal) selfChecking() int {
 	var status int = 0
 	_, err := os.Stat("../exec/" + server.Executable + ".json")
@@ -35,7 +36,7 @@ func (server *ServerLocal) selfChecking() int {
 	return status
 }
 
-// 按照错误码修复环境
+// 按照错误码准备环境
 func (server *ServerLocal) EnvPrepare() bool {
 	statusCode := server.selfChecking()
 	switch statusCode {
@@ -82,7 +83,6 @@ func (s *ServerRun) Close() {
 	s.Cmd.Process.Kill()
 	serverSaved[s.ID].Status = SERVER_STATUS_CLOSED
 }
-
 
 func (server *ServerLocal) Start() error {
 	if server.Status == 1 {
@@ -140,4 +140,35 @@ func (server *ServerLocal) Start() error {
 func outputListOfServers() Response {
 	b, _ := json.Marshal(serverSaved)
 	return Response{0, string(b)}
+}
+
+// 删除服务器
+func (server *ServerLocal) Delete() {
+
+	if server.Status == SERVER_STATUS_RUNNING {
+		servers[server.ID].Close()
+	}
+	// 如果服务器仍然开启则先关闭服务器。
+	// 成功关闭后，请Golang拆迁队清理违章建筑
+	nowPath, _ := filepath.Abs(".")
+	serverRunPath := filepath.Clean(nowPath + "/../servers/server" + strconv.Itoa(server.ID))
+	os.RemoveAll(serverRunPath)
+	// 清理服务器所占的储存空间
+	// 违章搭建搞定以后，把这个记账本的东东也删掉
+	id := searchServerByID(server.ID)
+	serverSaved = append(serverSaved[:id],serverSaved[id+1:]...)
+	// go这个切片是[,)左闭右开的区间，应该这么写吧~
+	// 保存服务器信息。
+	saveServerInfo()
+}
+
+// 搜索服务器的ID..返回index索引
+// 返回-1代表没找到
+func searchServerByID(id int) int {
+	for i := 0; i < len(serverSaved); i++ {
+		if serverSaved[i].ID == id {
+			return i
+		}
+	}
+	return -1
 }

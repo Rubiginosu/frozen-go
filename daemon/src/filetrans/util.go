@@ -2,9 +2,7 @@ package filetrans
 
 import (
 	"net"
-	"fmt"
 	"io"
-	"auth"
 	"os"
 )
 
@@ -12,10 +10,9 @@ func getMessage(c net.Conn) []byte{
 	b := make([]byte,256)
 	length,err:= c.Read(b)
 	if err != nil {
-		fmt.Println(err)
 		return nil
 	}
-	return b[:length-1]
+	return b[:length]
 }
 
 func sendMessage(c net.Conn,message string) bool {
@@ -27,6 +24,9 @@ func parseCommandArg(data []byte) *Command{
 	// 前四位设置为Command ,第六位到最后是Arg
 	//   AAAA      BBBBBBBBBB
 	// Command       Arg
+	if len(data) < 4 {
+		return &Command{"",""}
+	}
 	return &Command{string(data[:4]),string(data[5:])}
 }
 
