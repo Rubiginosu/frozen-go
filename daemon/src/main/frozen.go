@@ -7,6 +7,7 @@ import (
 	"auth"
 	"dmserver"
 	"os"
+	"filetrans"
 )
 
 const VERSION string = "v0.2.0_Alpha"
@@ -28,7 +29,7 @@ func main() {
 
 	fmt.Println("Starting Server Manager.")
 	go dmserver.StartDaemonServer(config)
-	//go filetrans.ListenAndServe(config)
+	go filetrans.ListenAndServe(config)
 	fmt.Println("Starting ValidationKeyUpdater.")
 	go auth.ValidationKeyUpdate(config.DaemonServer.ValidationKeyOutDateTimeSeconds)
 	fmt.Println("Done,type \"?\" for help. ")
@@ -66,7 +67,7 @@ func processLocalCommand(c string) {
 	switch c {
 	case "stop":
 		fmt.Println("Stopping...")
-		dmserver.StopDaemonServer(config)
+		dmserver.StopDaemonServer()
 	case "?":
 		fmt.Println("FrozenGo" + VERSION + " Help Manual -- by Axoford12")
 		fmt.Println("stop: Stop the daemon.save server changes.")

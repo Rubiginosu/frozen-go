@@ -32,12 +32,12 @@ type ServerRun struct {
 }
 
 /*
-用于判断索引为serverId 的服务器是否在运行之中。
+用于判断索引为index 的服务器是否在运行之中。
  */
-func isServerRunning(serverId int,serverSaved []ServerLocal) bool {
-	if serverId > len(serverSaved)-1 || serverId > len(servers)-1 {
+func isServerRunning(index int,serverSaved []ServerLocal) bool {
+	if index > len(serverSaved)-1 || index > len(servers)-1 {
 		return false
-	} else if serverSaved[serverId].Status != 1 {
+	} else if serverSaved[index].Status != 1 {
 		return false
 	} else {
 		return true
@@ -50,7 +50,7 @@ func ioCheck(request InterfaceRequest,c net.Conn) bool{
 	// 判定OpeareID的Key是否有效
 	if index := auth.FindValidationKey(request.Req.OperateID); index >= 0 {
 		// 发送给User认证
-		if auth.UserAuth(request.Req.OperateID, request.Auth, index,) {
+		if auth.UserAuth(searchServerByID(request.Req.OperateID), request.Auth, index,) {
 			if isServerRunning(request.Req.OperateID,serverSaved) {
 				return true
 				// 所有条件满足，返回True
@@ -87,7 +87,7 @@ func StartDaemonServer(conf conf.Config) {
 	}
 
 }
-func StopDaemonServer(config conf.Config) error{
+func StopDaemonServer() error{
 	for i:=0;i<len(servers);i++{
 		servers[i].Cmd.Process.Kill()
 	}

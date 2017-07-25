@@ -55,7 +55,7 @@ func GetValidationKeyPairs() []ValidationKeyPairTime {
 }
 func IsVerifiedValidationKeyPair(id int,key string) bool{
 	if i := FindValidationKey(id);i > -1 {
-		return ValidationKeyPairs[i].ValidationKeyPair.Key == key && ValidationKeyPairs[i].ValidationKeyPair.ID == id
+		return ValidationKeyPairs[i].ValidationKeyPair.Key == key
 	}
 	return false
 }

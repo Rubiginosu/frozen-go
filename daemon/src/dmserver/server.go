@@ -81,7 +81,7 @@ func (server *ServerLocal) loadExecutableConfig() (ExecConf, error) {
 func (s *ServerRun) Close() {
 	s.Cmd.Process.Release()
 	s.Cmd.Process.Kill()
-	serverSaved[s.ID].Status = SERVER_STATUS_CLOSED
+	serverSaved[searchServerByID(s.ID)].Status = SERVER_STATUS_CLOSED
 }
 
 func (server *ServerLocal) Start() error {

@@ -1,5 +1,10 @@
 package dmserver
 
 func IsServerAvaible(serverid int) bool {
-	return serverid < len(serverSaved)-1
+	for i:=0;i<len(serverSaved);i++{
+		if serverSaved[i].ID == serverid{
+			return true
+		}
+	}
+	return false
 }
