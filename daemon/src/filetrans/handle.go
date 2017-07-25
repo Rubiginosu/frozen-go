@@ -20,9 +20,10 @@ const (
 )
 
 func (c *Command) handleCommand(conn net.Conn, serverid int) {
+	serverPath := "../servers/server" + strconv.Itoa(serverid) + "/"
 	switch c.Command {
 	case COMMAND_LIST:
-		dir, err := os.Open("../servers/server" + strconv.Itoa(serverid))
+		dir, err := os.Open(serverPath)
 		files, err2 := dir.Readdir(-1)
 		if err != nil || err2 != nil {
 
@@ -37,14 +38,21 @@ func (c *Command) handleCommand(conn net.Conn, serverid int) {
 		}
 
 	case COMMAND_UPLOAD:
-		file, err := os.Create("../servers/server"+strconv.Itoa(serverid)+"/"+c.Args)
+		file, err := os.Create(serverPath+c.Args)
 		if err != nil {
 			panic(err)
 		}
 		io.Copy(file,conn)
 		file.Close()
+		sendMessage(conn,SERVER_UPDATE_OK)
 	case COMMAND_DOWNLOAD:
-
+		file, err := os.Open(serverPath+c.Args)
+		if err != nil {
+			fmt.Println(err.Error())
+			sendMessage(conn,SERVER_SERVER_INNO_ERROR)
+		}
+		io.Copy(conn,file)
+		sendMessage(conn,SERVER_UPDATE_OK)
 	}
 }
 
