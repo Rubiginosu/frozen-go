@@ -10,7 +10,7 @@ import (
 	"filetrans"
 )
 
-const VERSION string = "v0.2.0_Alpha"
+const VERSION string = "v0.3.0"
 const FILE_CONFIGURATION string = "../conf/fg.json"
 
 var config conf.Config

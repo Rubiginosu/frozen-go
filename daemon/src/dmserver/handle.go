@@ -96,7 +96,7 @@ func handleRequest(request Request) Response {
 		if !IsServerAvaible(request.OperateID) {
 			return Response{-1, "Invalid server id"}
 		}
-		serverSaved[request.OperateID].Delete()
+		serverSaved[searchServerByID(request.OperateID)].Delete()
 		return Response{0, "OK"}
 	case "Start":
 		// 运行这个服务器
