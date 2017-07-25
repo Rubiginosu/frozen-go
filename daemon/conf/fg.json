@@ -1,0 +1,14 @@
+{
+	"ServerManager": {
+		"Servers": "../data/servers.json"
+	},
+	"DaemonServer": {
+		"Port": 52023,
+		"VerifyCode": "92RguRtZFRP1Cwt8D484",
+		"DefaultBufLength": 256,
+		"ValidationKeyOutDateTimeSeconds": 20
+	},
+	"FileTransportServer": {
+		"Port": 52025
+	}
+}
