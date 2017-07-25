@@ -38,21 +38,21 @@ func (c *Command) handleCommand(conn net.Conn, serverid int) {
 		}
 
 	case COMMAND_UPLOAD:
-		file, err := os.Create(serverPath+c.Args)
+		file, err := os.Create(serverPath + c.Args)
 		if err != nil {
 			panic(err)
 		}
-		io.Copy(file,conn)
+		io.Copy(file, conn)
 		file.Close()
-		sendMessage(conn,SERVER_UPDATE_OK)
+		sendMessage(conn, SERVER_UPDATE_OK)
 	case COMMAND_DOWNLOAD:
-		file, err := os.Open(serverPath+c.Args)
+		file, err := os.Open(serverPath + c.Args)
 		if err != nil {
 			fmt.Println(err.Error())
-			sendMessage(conn,SERVER_SERVER_INNO_ERROR)
+			sendMessage(conn, SERVER_FILE_ERROR+err.Error())
 		}
-		io.Copy(conn,file)
-		sendMessage(conn,SERVER_UPDATE_OK)
+		io.Copy(conn, file)
+		sendMessage(conn, SERVER_FILE_SEND_FINISHED)
 	}
 }
 
@@ -64,12 +64,12 @@ func handleConnection(c net.Conn) {
 		command := parseCommandArg([]byte(getMessage(c)))
 		if command.Command == "" {
 			return
-		} else if serverid = command.auth() ;serverid>= 0 {
+		} else if serverid = command.auth(); serverid >= 0 {
 			sendMessage(c, SERVER_AUTH_SUCCEEDED)
 			break // 验证成功就跳出循环
-		} else if  command.Command != COMMAND_AUTH{
+		} else if command.Command != COMMAND_AUTH {
 			fmt.Println(command.Command)
-			sendMessage(c, SERvER_PLEASE_AUTH)
+			sendMessage(c, SERVER_PLEASE_AUTH)
 		} else {
 			// 告诉某人认证失败。
 			sendMessage(c, SERVER_AUTH_FAILED)
