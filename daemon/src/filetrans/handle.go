@@ -10,6 +10,7 @@ import (
 	"os"
 	"io"
 	"fmt"
+	"path"
 )
 
 const (
@@ -38,21 +39,31 @@ func (c *Command) handleCommand(conn net.Conn, serverid int) {
 		}
 
 	case COMMAND_UPLOAD:
-		file, err := os.Create(serverPath + c.Args)
+		fixedpath:=path.Clean(serverPath + c.Args)
+		if strings.Index(fixedpath, serverPath)!= 0 {
+			sendMessage(conn, SERVER_FILE_ERROR)
+		}else{
+		file, err := os.Create(fixedpath)
 		if err != nil {
 			panic(err)
 		}
 		io.Copy(file, conn)
 		file.Close()
 		sendMessage(conn, SERVER_UPDATE_OK)
+		}
 	case COMMAND_DOWNLOAD:
-		file, err := os.Open(serverPath + c.Args)
+		fixedpath:=path.Clean(serverPath + c.Args)
+		if strings.Index(fixedpath, serverPath)!= 0 {
+			sendMessage(conn, SERVER_FILE_ERROR)
+		}else{
+		file, err := os.Open(fixedpath)
 		if err != nil {
 			fmt.Println(err.Error())
 			sendMessage(conn, SERVER_FILE_ERROR+err.Error())
 		}
 		io.Copy(conn, file)
 		sendMessage(conn, SERVER_FILE_SEND_FINISHED)
+		}
 	}
 }
 
