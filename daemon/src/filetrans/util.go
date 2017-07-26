@@ -17,8 +17,9 @@ func getMessage(c net.Conn) string{
 			c.Close()
 			break
 		}
-		fmt.Printf("Receved: %s\n",line)
-		return strings.Trim(strings.TrimRight(line,"\r"),"\n")
+		res := strings.Trim(strings.TrimRight(line,"\r"),"\n")
+		fmt.Printf("Receved: %s\n",res)
+		return res
 	}
 	return ""
 }
