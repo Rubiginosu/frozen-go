@@ -40,7 +40,7 @@ func (c *Command) handleCommand(conn net.Conn, serverid int) {
 
 	case COMMAND_UPLOAD:
 		fixedpath:=path.Clean(serverPath + c.Args)
-		if strings.IndexAny(fixedpath, serverPath)!= 0 {
+		if strings.Index(fixedpath, serverPath)!= 0 {
 			sendMessage(conn, SERVER_FILE_ERROR)
 		}else{
 		file, err := os.Create(fixedpath)
@@ -53,7 +53,7 @@ func (c *Command) handleCommand(conn net.Conn, serverid int) {
 		}
 	case COMMAND_DOWNLOAD:
 		fixedpath:=path.Clean(serverPath + c.Args)
-		if strings.IndexAny(fixedpath, serverPath)!= 0 {
+		if strings.Index(fixedpath, serverPath)!= 0 {
 			sendMessage(conn, SERVER_FILE_ERROR)
 		}else{
 		file, err := os.Open(fixedpath)
