@@ -8,25 +8,45 @@ import (
 	"dmserver"
 	"os"
 	"filetrans"
+	"os/exec"
+	"strings"
+	"encoding/json"
+	"net/http"
+	"io/ioutil"
 )
 
-const VERSION string = "v0.3.0"
+const VERSION string = "v0.3.1"
 const FILE_CONFIGURATION string = "../conf/fg.json"
+const UPDATE_CURRECT_VERSION = "https://raw.githubusercontent.com/Rubiginosu/frozen-go/master/VERSION"
 
 var config conf.Config
 
-
-/*
-Command : List / Start / getStatus /
- */
 func main() {
 	if !(len(os.Args) > 1 && os.Args[1] == "-jump") {
 		printInfo()
+	} // 如果需要调试本程序，那么加上-jump参数可以跳过打印.
+	if isRoot() {
+		// 如果被判定有root权限，则结束程序(安全性考虑)
+		fmt.Println("Do not give FrozenGo root permission.")
+		return
 	}
 	fmt.Println("Loading config file...")
 	config, _ = conf.GetConfig(FILE_CONFIGURATION)
 	fmt.Println("Config get done.")
-
+	if versionCode,err := checkUpdate();err != nil {
+		fmt.Println(err)
+	} else {
+		fmt.Println("Version Check done:")
+		if versionCode > 1 {
+			fmt.Println("|---Daemon out of date")
+			fmt.Println("|---Your daemon need to be updated!")
+			return
+		} else if versionCode == 1{
+			fmt.Println("Small bugs fixed,You choose to updated it or not.")
+		} else {
+			fmt.Println("Lastest Version")
+		}
+	}
 	fmt.Println("Starting Server Manager.")
 	go dmserver.StartDaemonServer(config)
 	go filetrans.ListenAndServe(config)
@@ -73,5 +93,36 @@ func processLocalCommand(c string) {
 		fmt.Println("stop: Stop the daemon.save server changes.")
 		fmt.Println("status: Echo server status.")
 		return
+	case "status":
+		b,_ := json.Marshal(dmserver.GetServerSaved())
+		fmt.Println(string(b))
+		return
 	}
+}
+func isRoot() bool {
+	cmd := exec.Command("id")
+	b,_ := cmd.Output()
+	return strings.Index(string(b),"root") >= 0
+}
+func checkUpdate() (int,error) {
+	fmt.Println("Starting Version check...")
+	fmt.Println("This may take more time..")
+	resp,err := http.Get(UPDATE_CURRECT_VERSION)
+	if err != nil {
+		return -2,err
+	}
+	defer resp.Body.Close()
+	body,_ := ioutil.ReadAll(resp.Body)
+	body = []byte(strings.TrimRight(string(body),"\n\r"))
+	nowVersion := []byte(VERSION)
+	if body[1] != nowVersion[1] {
+		return 3,nil
+	} else if body[3] != nowVersion[3] {
+		return 2,nil
+	} else if body[5] != body[5] {
+		return 1,nil
+	} else {
+		return 0,nil
+	}
+	//return -2,errors.New("Unexpected error")
 }

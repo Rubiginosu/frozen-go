@@ -41,7 +41,7 @@ func (server *ServerLocal) EnvPrepare() bool {
 	statusCode := server.selfChecking()
 	switch statusCode {
 	case SSC_NO_SERVER_DIR:
-		err := os.MkdirAll("../servers/server"+strconv.Itoa(server.ID), 0666)
+		err := os.MkdirAll("../servers/server"+strconv.Itoa(server.ID), 0700)
 		return err == nil
 	case SSC_NO_CONFIG_FILE:
 		defaultExec := ExecConf{"java", []string{"-jar", "Minecraft.jar"}}
@@ -171,4 +171,7 @@ func searchServerByID(id int) int {
 		}
 	}
 	return -1
+}
+func GetServerSaved() []ServerLocal{
+	return serverSaved
 }
