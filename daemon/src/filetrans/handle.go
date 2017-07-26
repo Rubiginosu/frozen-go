@@ -28,7 +28,7 @@ func (c *Command) handleCommand(conn net.Conn, serverid int) {
 		files, err2 := dir.Readdir(-1)
 		if err != nil || err2 != nil {
 
-			sendMessage(conn, SERVER_SERVER_INNO_ERROR)
+			sendMessage(conn, SERVER_SERVER__ERROR)
 		} else {
 			var localFiles []localServerFile
 			for i := 0; i < len(files); i++ {

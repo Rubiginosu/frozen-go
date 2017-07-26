@@ -17,7 +17,7 @@ const (
 	SERVER_PLEASE_AUTH        = "301 Please Auth at first."
 	SERVER_FILE_ERROR         = "302 " // 后面加空格是直接加错误信息
 	SERVER_AUTH_FAILED        = "400 Server Auth Failed"
-	SERVER_SERVER_INNO_ERROR  = "500 Server internal error"
+	SERVER_SERVER__ERROR      = "500 Server internal error"
 )
 
 func ListenAndServe(conf conf.Config) {

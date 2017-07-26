@@ -52,7 +52,7 @@ func handleConnection(c net.Conn) {
 				io.Copy(c, servers[request.Req.OperateID].Stdout)
 			}
 		}
-	} else if auth.Auth([]byte(request.Auth), []byte(config.DaemonServer.VerifyCode)) {
+	} else if request.Auth == config.DaemonServer.VerifyCode{
 		res, _ := json.Marshal(handleRequest(request.Req))
 		c.Write(res)
 	} else {
