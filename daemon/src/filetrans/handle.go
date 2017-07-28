@@ -1,16 +1,16 @@
 package filetrans
 
 import (
-	"net"
-	"encoding/json"
-	"strings"
-	"strconv"
-	"dmserver"
 	"auth"
-	"os"
-	"io"
+	"dmserver"
+	"encoding/json"
 	"fmt"
+	"io"
+	"net"
+	"os"
 	"path"
+	"strconv"
+	"strings"
 )
 
 const (
@@ -41,7 +41,7 @@ func (c *Command) handleCommand(conn net.Conn, serverid int) {
 	case COMMAND_UPLOAD:
 		fixedpath := path.Clean(serverPath + c.Args)
 		if strings.Index(fixedpath, serverPath) != 0 {
-			sendMessage(conn, SERVER_FILE_ERROR + "Permission Denied")
+			sendMessage(conn, SERVER_FILE_ERROR+"Permission Denied")
 		} else {
 			file, err := os.Create(fixedpath)
 			if err != nil {
@@ -54,7 +54,7 @@ func (c *Command) handleCommand(conn net.Conn, serverid int) {
 	case COMMAND_DOWNLOAD:
 		fixedpath := path.Clean(serverPath + c.Args)
 		if strings.Index(fixedpath, serverPath) != 0 {
-			sendMessage(conn, SERVER_FILE_ERROR + "Permission Denied")
+			sendMessage(conn, SERVER_FILE_ERROR+"Permission Denied")
 		} else {
 			file, err := os.Open(fixedpath)
 			if err != nil {

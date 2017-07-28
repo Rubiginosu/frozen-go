@@ -15,4 +15,5 @@ type InterfaceRequest struct {
 	Auth string
 	Req  Request
 }
+
 // 命令处理器

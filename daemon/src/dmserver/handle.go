@@ -1,12 +1,12 @@
 package dmserver
 
 import (
-	"net"
-	"encoding/json"
-	"io/ioutil"
-	"io"
 	"auth"
 	"conf"
+	"encoding/json"
+	"io"
+	"io/ioutil"
+	"net"
 )
 
 var config conf.Config
@@ -52,7 +52,7 @@ func handleConnection(c net.Conn) {
 				io.Copy(c, servers[request.Req.OperateID].Stdout)
 			}
 		}
-	} else if request.Auth == config.DaemonServer.VerifyCode{
+	} else if request.Auth == config.DaemonServer.VerifyCode {
 		res, _ := json.Marshal(handleRequest(request.Req))
 		c.Write(res)
 	} else {

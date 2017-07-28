@@ -1,14 +1,14 @@
 package dmserver
 
 import (
-	"os"
-	"strconv"
 	"encoding/json"
+	"errors"
 	"io"
 	"io/ioutil"
-	"path/filepath"
+	"os"
 	"os/exec"
-	"errors"
+	"path/filepath"
+	"strconv"
 )
 
 const SSC_NO_CONFIG_FILE int = -1
@@ -156,7 +156,7 @@ func (server *ServerLocal) Delete() {
 	// 清理服务器所占的储存空间
 	// 违章搭建搞定以后，把这个记账本的东东也删掉
 	id := searchServerByID(server.ID)
-	serverSaved = append(serverSaved[:id],serverSaved[id+1:]...)
+	serverSaved = append(serverSaved[:id], serverSaved[id+1:]...)
 	// go这个切片是[,)左闭右开的区间，应该这么写吧~
 	// 保存服务器信息。
 	saveServerInfo()
@@ -172,6 +172,6 @@ func searchServerByID(id int) int {
 	}
 	return -1
 }
-func GetServerSaved() []ServerLocal{
+func GetServerSaved() []ServerLocal {
 	return serverSaved
 }

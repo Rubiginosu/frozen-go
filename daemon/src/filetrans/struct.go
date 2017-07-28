@@ -12,5 +12,3 @@ type localServerFile struct {
 	Size    int64
 	ModTIme int64
 }
-
-

@@ -1,15 +1,15 @@
 package dmserver
 
 import (
-	"net"
 	"auth"
-	"os/exec"
-	"io"
-	"strconv"
-	"fmt"
 	"conf"
-	"io/ioutil"
 	"encoding/json"
+	"fmt"
+	"io"
+	"io/ioutil"
+	"net"
+	"os/exec"
+	"strconv"
 )
 
 type ServerLocal struct {
@@ -33,8 +33,8 @@ type ServerRun struct {
 
 /*
 用于判断索引为index 的服务器是否在运行之中。
- */
-func isServerRunning(index int,serverSaved []ServerLocal) bool {
+*/
+func isServerRunning(index int, serverSaved []ServerLocal) bool {
 	if index > len(serverSaved)-1 || index > len(servers)-1 {
 		return false
 	} else if serverSaved[index].Status != 1 {
@@ -43,15 +43,16 @@ func isServerRunning(index int,serverSaved []ServerLocal) bool {
 		return true
 	}
 }
+
 /*
 测试服务器的标准输入输出流是否可用。
- */
-func ioCheck(request InterfaceRequest,c net.Conn) bool{
+*/
+func ioCheck(request InterfaceRequest, c net.Conn) bool {
 	// 判定OpeareID的Key是否有效
 	if index := auth.FindValidationKey(request.Req.OperateID); index >= 0 {
 		// 发送给User认证
-		if auth.UserAuth(searchServerByID(request.Req.OperateID), request.Auth, index,) {
-			if isServerRunning(request.Req.OperateID,serverSaved) {
+		if auth.UserAuth(searchServerByID(request.Req.OperateID), request.Auth, index) {
+			if isServerRunning(request.Req.OperateID, serverSaved) {
 				return true
 				// 所有条件满足，返回True
 			} else {
@@ -87,11 +88,11 @@ func StartDaemonServer(conf conf.Config) {
 	}
 
 }
-func StopDaemonServer() error{
-	for i:=0;i<len(servers);i++{
+func StopDaemonServer() error {
+	for i := 0; i < len(servers); i++ {
 		servers[i].Cmd.Process.Kill()
 	}
-	for i:=0;i<len(serverSaved);i++{
+	for i := 0; i < len(serverSaved); i++ {
 		serverSaved[i].Status = 0
 	}
 	return saveServerInfo()

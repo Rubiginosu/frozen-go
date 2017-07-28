@@ -2,12 +2,12 @@ package conf
 
 import (
 	"encoding/json"
-	"os"
 	"io/ioutil"
-	"time"
+	"math/rand"
+	"os"
 	"strconv"
 	"strings"
-	"math/rand"
+	"time"
 )
 
 type Config struct {
@@ -28,7 +28,7 @@ type serverManager struct {
 }
 
 type FileTransportServer struct {
-	Port       int
+	Port int
 }
 
 func GetConfig(filename string) (Config, error) {

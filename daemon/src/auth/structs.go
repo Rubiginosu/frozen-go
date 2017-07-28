@@ -10,4 +10,3 @@ type ValidationKeyPair struct {
 	ID  int // 该ID对应服务器。
 	Key string
 }
-
