@@ -10,7 +10,8 @@ import (
 	"io/ioutil"
 	"net/http"
 	"os"
-	"os/exec"
+	"os/user"
+	"strconv"
 	"strings"
 	"time"
 )
@@ -100,9 +101,15 @@ func processLocalCommand(c string) {
 	}
 }
 func isRoot() bool {
-	cmd := exec.Command("id")
-	b, _ := cmd.Output()
-	return strings.Index(string(b), "root") >= 0
+	nowUser, err := user.Current()
+	if err != nil {
+		panic(err)
+	}
+	userId, err2 := strconv.Atoi(nowUser.Uid)
+	if err2 != nil {
+		panic(err)
+	}
+	return userId == 0
 }
 func checkUpdate() (int, error) {
 	fmt.Println("Starting Version check...")
