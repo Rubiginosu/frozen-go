@@ -21,24 +21,10 @@ const SERVER_STATUS_CLOSED = 0
 // 正在运行
 const SERVER_STATUS_RUNNING = 1
 
-func (server *ServerLocal) selfChecking() int {
-	var status int = 0
-	_, err := os.Stat("../exec/" + server.Executable + ".json")
-	_, err2 := os.Stat("../servers/server" + strconv.Itoa(server.ID))
-	if err != nil {
-
-		status += SSC_NO_CONFIG_FILE
-
-	}
-	if err2 != nil {
-		status += SSC_NO_SERVER_DIR
-	}
-	return status
-}
-
 // 按照错误码准备环境
 func (server *ServerLocal) EnvPrepare() bool {
 	statusCode := server.selfChecking()
+	// TODO 修改这地区.
 	switch statusCode {
 	case SSC_NO_SERVER_DIR:
 		err := os.MkdirAll("../servers/server"+strconv.Itoa(server.ID), 0700)
