@@ -42,21 +42,22 @@ func handleConnection(c net.Conn) {
 	if request.Req.Method == "GetInput" {
 		if ioCheck(request, c) {
 			for {
-				io.Copy(servers[request.Req.OperateID].Stdin, c)
+				io.Copy(servers[searchRunningServerByID(request.Req.OperateID)].Stdin, c)
 			}
 		}
 
 	} else if request.Req.Method == "GetOutput" {
 		if ioCheck(request, c) {
 			for {
-				io.Copy(c, servers[request.Req.OperateID].Stdout)
+				io.Copy(c, servers[searchRunningServerByID(request.Req.OperateID)].Stdout)
 			}
 		}
 	} else if request.Auth == config.DaemonServer.VerifyCode {
 		res, _ := json.Marshal(handleRequest(request.Req))
 		c.Write(res)
+		c.Close()
 	} else {
-		connErrorToExit("Auth failed.", c)
+		connErrorToExit("No command.", c)
 	}
 
 }
@@ -64,17 +65,18 @@ func handleConnection(c net.Conn) {
 // 命令处理器
 func handleRequest(request Request) Response {
 	pairs := auth.GetValidationKeyPairs()
+	index := searchServerByID(request.OperateID)
 	switch request.Method {
 
 	case "List":
 		return outputListOfServers()
 	case "Create":
 		serverId := 0
-		if len(serverSaved) != 0{
+		if len(serverSaved) != 0 {
 			serverId = serverSaved[len(serverSaved)-1].ID + 1
 		}
 
-		serverSaved = append(serverSaved, ServerLocal{serverId, request.Message, "", 0,0})
+		serverSaved = append(serverSaved, ServerLocal{serverId, request.Message, "", 0, 0})
 		serverSaved[len(serverSaved)-1].EnvPrepare()
 		// 序列化b来储存。
 		b, err := json.MarshalIndent(serverSaved, "", "\t")
@@ -104,13 +106,14 @@ func handleRequest(request Request) Response {
 		serverSaved[searchServerByID(request.OperateID)].Delete()
 		return Response{0, "OK"}
 	case "Start":
+
 		// 运行这个服务器
-		if request.OperateID > len(serverSaved)-1 {
+		if index < 0 {
 			return Response{
 				-1, "Invalid server id",
 			}
 		}
-		err := serverSaved[request.OperateID].Start()
+		err := serverSaved[index].Start()
 		if err == nil {
 			return Response{
 				0, "OK",
@@ -120,17 +123,19 @@ func handleRequest(request Request) Response {
 		}
 
 	case "Stop":
-		if request.OperateID > len(servers)-1 {
+		if index := searchRunningServerByID(request.OperateID); index < 0 {
 			return Response{0, "Invalid serverid"}
+		} else {
+			servers[index].Close()
 		}
-		servers[request.OperateID].Close()
+
 
 		return Response{
 			0, "OK",
 		}
 
 	case "SetExecutable":
-		serverSaved[request.OperateID].Executable = request.Message
+		serverSaved[index].Executable = request.Message
 		return Response{
 			0, "OK",
 		}

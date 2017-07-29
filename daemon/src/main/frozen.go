@@ -89,6 +89,7 @@ func processLocalCommand(c string) {
 	case "stop":
 		fmt.Println("Stopping...")
 		dmserver.StopDaemonServer()
+		os.Exit(0)
 	case "?":
 		fmt.Println("FrozenGo" + VERSION + " Help Manual -- by Axoford12")
 		fmt.Println("stop: Stop the daemon.save server changes.")

@@ -1,23 +1,9 @@
 [
 	{
-		"ID": 3,
-		"Name": "TestServer",
+		"ID": 0,
+		"Name": "1",
 		"Executable": "",
 		"Status": 0,
 		"UserUid": 0
-	},
-	{
-		"ID": 4,
-		"Name": "TestServer",
-		"Executable": "",
-		"Status": 0,
-		"UserUid": 0
-	},
-	{
-		"ID": 5,
-		"Name": "123",
-		"Executable": "Minecraft",
-		"Status": 0,
-		"UserUid": 5
 	}
 ]

@@ -32,18 +32,6 @@ type ServerRun struct {
 	Stdout io.ReadCloser
 }
 
-/*
-用于判断索引为index 的服务器是否在运行之中。
-*/
-func isServerRunning(index int, serverSaved []ServerLocal) bool {
-	if index > len(serverSaved)-1 || index > len(servers)-1 {
-		return false
-	} else if serverSaved[index].Status != 1 {
-		return false
-	} else {
-		return true
-	}
-}
 
 /*
 测试服务器的标准输入输出流是否可用。
@@ -52,8 +40,8 @@ func ioCheck(request InterfaceRequest, c net.Conn) bool {
 	// 判定OpeareID的Key是否有效
 	if index := auth.FindValidationKey(request.Req.OperateID); index >= 0 {
 		// 发送给User认证
-		if auth.UserAuth(searchServerByID(request.Req.OperateID), request.Auth, index) {
-			if isServerRunning(request.Req.OperateID, serverSaved) {
+		if auth.UserAuth(request.Req.OperateID, request.Auth, index) {
+			if searchRunningServerByID(request.Req.OperateID) >= 0 && serverSaved[searchServerByID(request.Req.OperateID)].Status == SERVER_STATUS_RUNNING{
 				return true
 				// 所有条件满足，返回True
 			} else {
@@ -80,7 +68,7 @@ func StartDaemonServer(conf conf.Config) {
 	} else {
 		for {
 			conn, err := ln.Accept()
-			fmt.Println("New Client connected.")
+			fmt.Println("[Daemon]New Client Request send.From " + conn.LocalAddr().String())
 			if err != nil {
 				continue
 			}

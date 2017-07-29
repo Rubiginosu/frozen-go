@@ -1,7 +1,4 @@
 {
-	"Command": "java",
-	"Args": [
-		"-jar",
-		"Minecraft.jar"
-	]
+	"Command": "id",
+	"Args": []
 }

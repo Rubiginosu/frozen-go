@@ -35,7 +35,8 @@ type FileTransportServer struct {
 func GetConfig(filename string) (Config, error) {
 	file, err := os.Open(filename)
 	if err != nil {
-		GenerateConfig("../conf/fg.json")
+		return GenerateConfig("../conf/fg.json"),nil
+
 	}
 	var v Config
 	b, err2 := ioutil.ReadAll(file)
@@ -46,11 +47,11 @@ func GetConfig(filename string) (Config, error) {
 	return v, nil
 }
 
-func GenerateConfig(filepath string) error {
+func GenerateConfig(filepath string) Config {
 	file, err := os.Create(filepath)
 	defer file.Close()
 	if err != nil {
-		return err
+		panic(err)
 	}
 	var v Config = Config{
 		serverManager{"../data/servers.json"},
@@ -60,7 +61,7 @@ func GenerateConfig(filepath string) error {
 	s, _ := json.MarshalIndent(v, "", "\t")
 	file.Write(s)
 
-	return nil
+	return v
 }
 
 // 用于获取一个随机字符串

@@ -33,7 +33,7 @@ func (server *ServerLocal) EnvPrepare() error {
 	}
 	_,err2 := user.LookupId(strconv.Itoa(userUid))
 	if err2 != nil {
-		cmd := exec.Command("/usr/sbin/useradd","-s","/sbin/nologin","fg"+strconv.Itoa(server.ID),"-u " + strconv.Itoa(userUid))
+		cmd := exec.Command("/usr/sbin/useradd","fg"+strconv.Itoa(server.ID),"-u " + strconv.Itoa(userUid))
 		err := cmd.Run()
 		return err
 	}
@@ -109,9 +109,15 @@ func (server *ServerLocal) Start() error {
 		if err != nil {
 			panic(err)
 		}
-		userNow,_ := user.Current()
-		gid,_ :=strconv.Atoi(userNow.Gid)
-		cmd.SysProcAttr = &syscall.SysProcAttr{Credential:&syscall.Credential{Uid:uint32(server.UserUid),Gid:uint32(gid)}}
+		cmd.SysProcAttr = &syscall.SysProcAttr{}
+		cmd.SysProcAttr.Cloneflags = syscall.CLONE_NEWUSER | syscall.CLONE_NEWNS | syscall.CLONE_NEWUTS | syscall.CLONE_NEWPID | syscall.CLONE_NEWIPC | syscall.CLONE_NEWNET
+		cmd.SysProcAttr.Credential = &syscall.Credential{
+			Uid: 0,
+			Gid: 0,
+		}
+
+		cmd.SysProcAttr.UidMappings = []syscall.SysProcIDMap{{ContainerID: 0, HostID: server.UserUid, Size: 1}}
+		cmd.SysProcAttr.GidMappings = []syscall.SysProcIDMap{{ContainerID: 0, HostID: server.UserUid, Size: 1}}
 		err3 := cmd.Start()
 		if err3 != nil {
 			panic(err3)
@@ -165,4 +171,14 @@ func searchServerByID(id int) int {
 }
 func GetServerSaved() []ServerLocal {
 	return serverSaved
+}
+// 搜索服务器的ID..返回index索引
+// 返回-1代表没找到
+func searchRunningServerByID(id int) int {
+	for i := 0; i < len(servers); i++ {
+		if servers[i].ID == id {
+			return i
+		}
+	}
+	return -1
 }
