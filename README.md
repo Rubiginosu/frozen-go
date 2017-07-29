@@ -1,5 +1,5 @@
 ![Frozen Go](https://raw.githubusercontent.com/Rubiginosu/frozen-go/master/FrozenGo%20Logo/readme-logo.png)
-<br />官方网站：https://fg.mcpe.cc/
+<br />官方网站：https://fg.mcpe.cc/ (目前有中文和日本語欢迎各位大大前来翻译)
 ---
 一个简单的Minecraft管理系统，包括自动售卖，服务器管理等等功能，类似于国外Multicraft，软件使用MIT开源，请使用者遵守MIT开源协议。
 
