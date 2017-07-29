@@ -1,11 +1,15 @@
 {
-	"ServerManagerConfig": {
+	"ServerManager": {
 		"Servers": "../data/servers.json"
 	},
-	"DaemonServerConfig": {
+	"DaemonServer": {
 		"Port": 52023,
-		"VerifyCode": "bXE3lBzk4wQ9ApdP522c",
+		"VerifyCode": "uH1C0ZKkx9SaNJJXyslV",
 		"DefaultBufLength": 256,
-		"ValidationKeyOutDateTimeSeconds": 20
+		"ValidationKeyOutDateTimeSeconds": 20,
+		"UserIdOffset": 100000
+	},
+	"FileTransportServer": {
+		"Port": 52025
 	}
 }

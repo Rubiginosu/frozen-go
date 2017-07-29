@@ -2,28 +2,34 @@ package conf
 
 import (
 	"encoding/json"
-	"os"
 	"io/ioutil"
-	"time"
+	"math/rand"
+	"os"
 	"strconv"
 	"strings"
-	"math/rand"
+	"time"
 )
 
 type Config struct {
-	ServerManagerConfig serverManagerConfig
-	DaemonServerConfig  DaemonServerConfig
+	ServerManager       serverManager
+	DaemonServer        DaemonServer
+	FileTransportServer FileTransportServer
 }
 
-type DaemonServerConfig struct {
+type DaemonServer struct {
 	Port                            int
 	VerifyCode                      string
 	DefaultBufLength                int
 	ValidationKeyOutDateTimeSeconds float64
+	UserIdOffset                    int
 }
 
-type serverManagerConfig struct {
+type serverManager struct {
 	Servers string
+}
+
+type FileTransportServer struct {
+	Port int
 }
 
 func GetConfig(filename string) (Config, error) {
@@ -47,8 +53,9 @@ func GenerateConfig(filepath string) error {
 		return err
 	}
 	var v Config = Config{
-		serverManagerConfig{"../data/servers.json"},
-		DaemonServerConfig{52023, RandString(20), 256, 20}, // 为何选择52023？俺觉得23号这个妹纸很可爱啊
+		serverManager{"../data/servers.json"},
+		DaemonServer{52023, RandString(20), 256, 20,100000}, // 为何选择52023？俺觉得23号这个妹纸很可爱啊
+		FileTransportServer{52025},
 	}
 	s, _ := json.MarshalIndent(v, "", "\t")
 	file.Write(s)
