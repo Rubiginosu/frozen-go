@@ -18,7 +18,7 @@ import (
 
 const VERSION string = "v0.3.1"
 const FILE_CONFIGURATION string = "../conf/fg.json"
-const UPDATE_CURRECT_VERSION = "https://raw.githubusercontent.com/Rubiginosu/frozen-go/master/VERSION"
+const UPDATE_CURRENT_VERSION = "https://raw.githubusercontent.com/Rubiginosu/frozen-go/master/VERSION"
 
 var config conf.Config
 
@@ -26,9 +26,9 @@ func main() {
 	if !(len(os.Args) > 1 && os.Args[1] == "-jump") {
 		printInfo()
 	} // 如果需要调试本程序，那么加上-jump参数可以跳过打印.
-	if isRoot() {
+	if !isRoot() {
 		// 如果被判定有root权限，则结束程序(安全性考虑)
-		fmt.Println("Do not give FrozenGo root permission.")
+		fmt.Println("Root permission needed!")
 		return
 	}
 	fmt.Println("Loading config file...")
@@ -114,7 +114,7 @@ func isRoot() bool {
 func checkUpdate() (int, error) {
 	fmt.Println("Starting Version check...")
 	fmt.Println("This may take more time..")
-	resp, err := http.Get(UPDATE_CURRECT_VERSION)
+	resp, err := http.Get(UPDATE_CURRENT_VERSION)
 	if err != nil {
 		return -2, err
 	}

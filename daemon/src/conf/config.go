@@ -21,6 +21,7 @@ type DaemonServer struct {
 	VerifyCode                      string
 	DefaultBufLength                int
 	ValidationKeyOutDateTimeSeconds float64
+	UserIdOffset                    int
 }
 
 type serverManager struct {
@@ -53,7 +54,7 @@ func GenerateConfig(filepath string) error {
 	}
 	var v Config = Config{
 		serverManager{"../data/servers.json"},
-		DaemonServer{52023, RandString(20), 256, 20}, // 为何选择52023？俺觉得23号这个妹纸很可爱啊
+		DaemonServer{52023, RandString(20), 256, 20,100000}, // 为何选择52023？俺觉得23号这个妹纸很可爱啊
 		FileTransportServer{52025},
 	}
 	s, _ := json.MarshalIndent(v, "", "\t")

@@ -69,7 +69,12 @@ func handleRequest(request Request) Response {
 	case "List":
 		return outputListOfServers()
 	case "Create":
-		serverSaved = append(serverSaved, ServerLocal{serverSaved[len(serverSaved)-1].ID + 1, request.Message, "", 0})
+		serverId := 0
+		if len(serverSaved) != 0{
+			serverId = serverSaved[len(serverSaved)-1].ID + 1
+		}
+
+		serverSaved = append(serverSaved, ServerLocal{serverId, request.Message, "", 0,0})
 		serverSaved[len(serverSaved)-1].EnvPrepare()
 		// 序列化b来储存。
 		b, err := json.MarshalIndent(serverSaved, "", "\t")

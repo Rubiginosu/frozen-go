@@ -17,6 +17,7 @@ type ServerLocal struct {
 	Name       string
 	Executable string
 	Status     int
+	UserUid    int
 }
 
 type ExecConf struct {

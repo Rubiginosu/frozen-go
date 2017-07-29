@@ -3,53 +3,53 @@ package dmserver
 import (
 	"encoding/json"
 	"errors"
-	"io"
 	"io/ioutil"
 	"os"
 	"os/exec"
 	"path/filepath"
 	"strconv"
+	"os/user"
+	"syscall"
 )
 
-const SSC_NO_CONFIG_FILE int = -1
-const SSC_NO_SERVER_DIR = -2
 
 // 服务器状态码
 // 已经关闭
 const SERVER_STATUS_CLOSED = 0
-
-// 正在运行
 const SERVER_STATUS_RUNNING = 1
 
 // 按照错误码准备环境
-func (server *ServerLocal) EnvPrepare() bool {
-	statusCode := server.selfChecking()
-	// TODO 修改这地区.
-	switch statusCode {
-	case SSC_NO_SERVER_DIR:
-		err := os.MkdirAll("../servers/server"+strconv.Itoa(server.ID), 0700)
-		return err == nil
-	case SSC_NO_CONFIG_FILE:
-		defaultExec := ExecConf{"java", []string{"-jar", "Minecraft.jar"}}
-		//defaultExec := ExecConf{"ping",nil}
-		file, err := os.Create("../exec/Minecraft.json")
-		defer file.Close()
-		b, err2 := json.MarshalIndent(defaultExec, "", "\t")
-		io.WriteString(file, string(b)) // 写入文件
-		return err == nil && err2 == nil
-	case SSC_NO_CONFIG_FILE + SSC_NO_SERVER_DIR:
-		// 两路一起执行
-		err3 := os.MkdirAll("../servers/server"+strconv.Itoa(server.ID), 0666)
-		defaultExec := ExecConf{"java", []string{"-jar", "Minecraft.jar"}}
-		//defaultExec := ExecConf{"ping",nil}
-		file, err := os.Create("../exec/Minecraft.json")
-		defer file.Close()
-		b, err2 := json.MarshalIndent(defaultExec, "", "\t")
-		io.WriteString(file, string(b)) // 写入文件
-		return err == nil && err2 == nil && err3 == nil
+func (server *ServerLocal) EnvPrepare() error {
+	userUid := server.ID + config.DaemonServer.UserIdOffset
+	serverDataDir := "../servers/server" + strconv.Itoa(server.ID) // 在一开头就把serverDir算好，增加代码重用
+	fileInfo,err := os.Stat(serverDataDir)
+	if err  != nil {
+		err := server.prepareDir(serverDataDir)
+		if err != nil {
+			return err
+		}
+	} else if fileInfo.Mode() != 0660{
+		os.Chmod(serverDataDir,0660)
 	}
-	return false
+	_,err2 := user.LookupId(strconv.Itoa(userUid))
+	if err2 != nil {
+		cmd := exec.Command("/usr/sbin/useradd","-s","/sbin/nologin","fg"+strconv.Itoa(server.ID),"-u " + strconv.Itoa(userUid))
+		err := cmd.Run()
+		return err
+	}
+	userNow,_ := user.Current()
+	gid,_ :=strconv.Atoi(userNow.Gid)
+	os.Chown(serverDataDir,userUid,gid)
+
+	server.UserUid = userUid
+	return nil
 }
+
+func (server *ServerLocal) prepareDir(serverDataDir string) error{
+	err := os.MkdirAll(serverDataDir,660)
+	return err
+}
+
 func (server *ServerLocal) loadExecutableConfig() (ExecConf, error) {
 	var newServerRuntimeConf ExecConf
 	b, err := ioutil.ReadFile("../exec/" + server.Executable + ".json") // 将配置文件读入
@@ -74,9 +74,12 @@ func (server *ServerLocal) Start() error {
 	if server.Status == 1 {
 		return errors.New("Server already started.")
 	}
-	server.EnvPrepare()
-	serverRC, err := server.loadExecutableConfig()
+	err := server.EnvPrepare()
 	if err != nil {
+		return err
+	}
+	serverRC, err2 := server.loadExecutableConfig()
+	if err2 != nil {
 		// 环境准备失败
 		return errors.New("Cannot prepare server env(exec file not found!")
 	} else {
@@ -106,7 +109,9 @@ func (server *ServerLocal) Start() error {
 		if err != nil {
 			panic(err)
 		}
-
+		userNow,_ := user.Current()
+		gid,_ :=strconv.Atoi(userNow.Gid)
+		cmd.SysProcAttr = &syscall.SysProcAttr{Credential:&syscall.Credential{Uid:uint32(server.UserUid),Gid:uint32(gid)}}
 		err3 := cmd.Start()
 		if err3 != nil {
 			panic(err3)

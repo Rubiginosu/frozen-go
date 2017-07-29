@@ -4,9 +4,10 @@
 	},
 	"DaemonServer": {
 		"Port": 52023,
-		"VerifyCode": "92RguRtZFRP1Cwt8D484",
+		"VerifyCode": "uH1C0ZKkx9SaNJJXyslV",
 		"DefaultBufLength": 256,
-		"ValidationKeyOutDateTimeSeconds": 20
+		"ValidationKeyOutDateTimeSeconds": 20,
+		"UserIdOffset": 100000
 	},
 	"FileTransportServer": {
 		"Port": 52025
