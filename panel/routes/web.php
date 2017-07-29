@@ -16,5 +16,6 @@ Route::get('/', function () {
 });
 
 Route::get('/index','FaceController@index');//将初始请求接入此处
+Route::get('/panel/index','PanelController@index')->middleware('checkServe');
 
 ?>
