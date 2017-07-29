@@ -1,4 +1,4 @@
-![Frozen Go](https://raw.githubusercontent.com/Rubiginosu/frozen-go/master/FrozenGo%20Logo/logo-only-fg.png)
+![Frozen Go](https://raw.githubusercontent.com/Rubiginosu/frozen-go/master/FrozenGo%20Logo/readme-logo.png)
 ---
 一个简单的Minecraft管理系统，包括自动售卖，服务器管理等等功能，类似于国外Multicraft，软件使用MIT开源，请使用者遵守MIT开源协议。
 
