@@ -64,73 +64,11 @@ func (server *ServerLocal) loadExecutableConfig() (ExecConf, error) {
 }
 
 func (s *ServerRun) Close() {
-	s.Cmd.Process.Release()
-	s.Cmd.Process.Kill()
-	serverSaved[searchServerByID(s.ID)].Status = SERVER_STATUS_CLOSED
+
 }
 
 func (server *ServerLocal) Start() error {
-	if server.Status == 1 {
-		return errors.New("Server already started.")
-	}
-	err := server.EnvPrepare()
-	if err != nil {
-		return err
-	}
-	serverRC, err2 := server.loadExecutableConfig()
-	if err2 != nil {
-		// 环境准备失败
-		return errors.New("Cannot prepare server env(exec file not found!")
-	} else {
-		// 如果Command就是一个绝对路径，不再寻找。
-		execPath := serverRC.Command
-		if !filepath.IsAbs(serverRC.Command) {
-			var isNoFound error
-			execPath, isNoFound = exec.LookPath(serverRC.Command)
-			if isNoFound != nil {
-				return isNoFound // 没找到抛err
-			}
-		}
-		// 根据提供的EXEC名，搜寻绝对目录
-		nowPath, err := filepath.Abs(".")
-		if err != nil {
-			return errors.New(err.Error())
-		}
-		// 取得服务器目录
-		serverRunPath := filepath.Clean(nowPath + "/../servers/server" + strconv.Itoa(server.ID))
-		cmd := exec.Command(execPath, serverRC.Args...)
-		cmd.Dir = serverRunPath
-		stdout, err := cmd.StdoutPipe()
-		stdin, err2 := cmd.StdinPipe()
-		if err2 != nil {
-			panic(err2)
-		}
-		if err != nil {
-			panic(err)
-		}
-		cmd.SysProcAttr = &syscall.SysProcAttr{}
-		cmd.SysProcAttr.Cloneflags = syscall.CLONE_NEWUSER | syscall.CLONE_NEWNS | syscall.CLONE_NEWUTS | syscall.CLONE_NEWPID | syscall.CLONE_NEWIPC | syscall.CLONE_NEWNET
-		cmd.SysProcAttr.Credential = &syscall.Credential{
-			Uid: 0,
-			Gid: 0,
-		}
 
-		cmd.SysProcAttr.UidMappings = []syscall.SysProcIDMap{{ContainerID: 0, HostID: server.UserUid, Size: 1}}
-		cmd.SysProcAttr.GidMappings = []syscall.SysProcIDMap{{ContainerID: 0, HostID: server.UserUid, Size: 1}}
-		err3 := cmd.Start()
-		if err3 != nil {
-			panic(err3)
-		}
-		newRunningServer := ServerRun{
-			ID:     server.ID,
-			Cmd:    cmd,
-			Stdout: stdout,
-			Stdin:  stdin,
-		}
-		server.Status = SERVER_STATUS_RUNNING
-		servers = append(servers, newRunningServer)
-		return nil
-	}
 }
 
 func outputListOfServers() Response {
