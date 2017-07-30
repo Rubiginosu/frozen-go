@@ -4,6 +4,7 @@ import (
 	"auth"
 	"conf"
 	"encoding/json"
+	"fmt"
 	"io"
 	"io/ioutil"
 	"net"
@@ -14,7 +15,6 @@ import (
 var config conf.Config
 var serverSaved []ServerLocal
 var servers []ServerRun
-var modules []string
 
 func connErrorToExit(errorInfo string, c net.Conn) {
 	res, _ := json.Marshal(Response{-1, errorInfo})
@@ -60,7 +60,7 @@ func handleConnection(c net.Conn) {
 		c.Write(res)
 		c.Close()
 	} else {
-		connErrorToExit("No command.", c)
+		connErrorToExit("No command or Auth error.", c)
 	}
 
 }
@@ -163,25 +163,33 @@ func handleRequest(request Request) Response {
 		auth.ValidationKeyPairs = append(auth.ValidationKeyPairs, pair)
 		return Response{0, string(responseData)}
 	case "ExecInstall":
-		conn, err := http.Get(request.Message + "?jarid=" + strconv.Itoa(request.OperateID))
+		fmt.Println("Recevied [ExecInstall] Command!")
+		fmt.Println("Try to auto install id:" + strconv.Itoa(request.OperateID))
+		fmt.Println("From " + request.Message)
+		conn, err := http.Get(request.Message + "?id=" + strconv.Itoa(request.OperateID))
 		if err != nil {
+			fmt.Println("Get ExecInstallConfig error!")
 			return Response{-1, err.Error()}
 		}
 		defer conn.Body.Close()
 		respData, err2 := ioutil.ReadAll(conn.Body)
 		if err2 != nil {
+			fmt.Println("Read body error")
 			return Response{-1, err2.Error()}
 		}
 		var config ExecInstallConfig
 		err3 := json.Unmarshal(respData, &config)
 		if err2 != nil {
+			fmt.Println("Json Unmarshal error!")
 			return Response{-1, err3.Error()}
 		}
 		if !config.Success {
 			return Response{-1, "Get exec data error:" + config.Message}
 		}
 		// 解析成功且没有错误
-		// TODO 编写安装模块的逻辑，以及安装逻辑
+		go install(config)
+		return Response{0, "OK,Installing"}
+
 	}
 	return Response{
 		-1, "Unexpected err",

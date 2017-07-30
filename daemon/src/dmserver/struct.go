@@ -22,13 +22,12 @@ type InterfaceRequest struct {
 }
 
 type ExecInstallConfig struct {
-	Rely      string
+	Rely      []Module
 	Success   bool
 	Timestamp int
 	Url       string
-	RelyChmod string
 	StartConf ExecConf
-	Message              string
+	Message   string
 }
 type ExecConf struct {
 	Name                 string
@@ -38,9 +37,13 @@ type ExecConf struct {
 	NewPlayerJoinRegexp  string   // 判定新人加入的表达式
 	PlayExitRegexp       string   // 判定有人退出的表达式
 	MaxMemory            int      // 内存限制
-	MaxCpu               int      // CPU限制
 	StoppedServerCommand string   // 服务器软退出指令
 
+}
+type Module struct {
+	Name     string
+	Download string
+	Chmod    string
 }
 
 type ServerLocal struct {

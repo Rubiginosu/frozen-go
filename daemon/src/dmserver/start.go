@@ -6,22 +6,16 @@ import (
 	"fmt"
 	"io/ioutil"
 	"net"
-	"strconv"
 	"os"
+	"strconv"
 )
 
 func StartDaemonServer(conf conf.Config) {
 	config = conf
 	b, _ := ioutil.ReadFile(config.ServerManager.Servers)
 	err2 := json.Unmarshal(b, &serverSaved)
-	if err2 != nil{
+	if err2 != nil {
 		fmt.Println(err2)
-		os.Exit(-2)
-	}
-	b, _ = ioutil.ReadFile(config.ServerManager.Modules)
-	err3 := json.Unmarshal(b,&modules)
-	if err3 != nil {
-		fmt.Println(err3)
 		os.Exit(-2)
 	}
 	ln, err := net.Listen("tcp", ":"+strconv.Itoa(config.DaemonServer.Port)) // 默认使用tcp连接

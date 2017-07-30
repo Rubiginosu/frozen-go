@@ -1,10 +1,11 @@
 {
 	"ServerManager": {
-		"Servers": "../data/servers.json"
+		"Servers": "../data/servers.json",
+		"Modules": "../data/modules"
 	},
 	"DaemonServer": {
 		"Port": 52023,
-		"VerifyCode": "uH1C0ZKkx9SaNJJXyslV",
+		"VerifyCode": "987IsA1MWIa68yQcvMfy",
 		"DefaultBufLength": 256,
 		"ValidationKeyOutDateTimeSeconds": 20,
 		"UserIdOffset": 100000
