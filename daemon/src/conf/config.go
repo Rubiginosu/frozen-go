@@ -26,6 +26,7 @@ type DaemonServer struct {
 
 type serverManager struct {
 	Servers string
+	Modules string
 }
 
 type FileTransportServer struct {
@@ -35,7 +36,8 @@ type FileTransportServer struct {
 func GetConfig(filename string) (Config, error) {
 	file, err := os.Open(filename)
 	if err != nil {
-		GenerateConfig("../conf/fg.json")
+		return GenerateConfig("../conf/fg.json"), nil
+
 	}
 	var v Config
 	b, err2 := ioutil.ReadAll(file)
@@ -46,21 +48,21 @@ func GetConfig(filename string) (Config, error) {
 	return v, nil
 }
 
-func GenerateConfig(filepath string) error {
+func GenerateConfig(filepath string) Config {
 	file, err := os.Create(filepath)
 	defer file.Close()
 	if err != nil {
-		return err
+		panic(err)
 	}
 	var v Config = Config{
-		serverManager{"../data/servers.json"},
-		DaemonServer{52023, RandString(20), 256, 20,100000}, // 为何选择52023？俺觉得23号这个妹纸很可爱啊
+		serverManager{"../data/servers.json", "../data/modules.json"},
+		DaemonServer{52023, RandString(20), 256, 20, 100000}, // 为何选择52023？俺觉得23号这个妹纸很可爱啊
 		FileTransportServer{52025},
 	}
 	s, _ := json.MarshalIndent(v, "", "\t")
 	file.Write(s)
 
-	return nil
+	return v
 }
 
 // 用于获取一个随机字符串

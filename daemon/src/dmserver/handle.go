@@ -4,9 +4,12 @@ import (
 	"auth"
 	"conf"
 	"encoding/json"
+	"fmt"
 	"io"
 	"io/ioutil"
 	"net"
+	"net/http"
+	"strconv"
 )
 
 var config conf.Config
@@ -42,21 +45,22 @@ func handleConnection(c net.Conn) {
 	if request.Req.Method == "GetInput" {
 		if ioCheck(request, c) {
 			for {
-				io.Copy(servers[request.Req.OperateID].Stdin, c)
+				io.Copy(servers[searchRunningServerByID(request.Req.OperateID)].Stdin, c)
 			}
 		}
 
 	} else if request.Req.Method == "GetOutput" {
 		if ioCheck(request, c) {
 			for {
-				io.Copy(c, servers[request.Req.OperateID].Stdout)
+				io.Copy(c, servers[searchRunningServerByID(request.Req.OperateID)].Stdout)
 			}
 		}
 	} else if request.Auth == config.DaemonServer.VerifyCode {
 		res, _ := json.Marshal(handleRequest(request.Req))
 		c.Write(res)
+		c.Close()
 	} else {
-		connErrorToExit("Auth failed.", c)
+		connErrorToExit("No command or Auth error.", c)
 	}
 
 }
@@ -64,17 +68,18 @@ func handleConnection(c net.Conn) {
 // 命令处理器
 func handleRequest(request Request) Response {
 	pairs := auth.GetValidationKeyPairs()
+	index := searchServerByID(request.OperateID)
 	switch request.Method {
 
 	case "List":
 		return outputListOfServers()
 	case "Create":
 		serverId := 0
-		if len(serverSaved) != 0{
+		if len(serverSaved) != 0 {
 			serverId = serverSaved[len(serverSaved)-1].ID + 1
 		}
 
-		serverSaved = append(serverSaved, ServerLocal{serverId, request.Message, "", 0,0})
+		serverSaved = append(serverSaved, ServerLocal{serverId, request.Message, "", 0, 0})
 		serverSaved[len(serverSaved)-1].EnvPrepare()
 		// 序列化b来储存。
 		b, err := json.MarshalIndent(serverSaved, "", "\t")
@@ -104,13 +109,14 @@ func handleRequest(request Request) Response {
 		serverSaved[searchServerByID(request.OperateID)].Delete()
 		return Response{0, "OK"}
 	case "Start":
+
 		// 运行这个服务器
-		if request.OperateID > len(serverSaved)-1 {
+		if index < 0 {
 			return Response{
 				-1, "Invalid server id",
 			}
 		}
-		err := serverSaved[request.OperateID].Start()
+		err := serverSaved[index].Start()
 		if err == nil {
 			return Response{
 				0, "OK",
@@ -120,17 +126,18 @@ func handleRequest(request Request) Response {
 		}
 
 	case "Stop":
-		if request.OperateID > len(servers)-1 {
+		if index := searchRunningServerByID(request.OperateID); index < 0 {
 			return Response{0, "Invalid serverid"}
+		} else {
+			servers[index].Close()
 		}
-		servers[request.OperateID].Close()
 
 		return Response{
 			0, "OK",
 		}
 
 	case "SetExecutable":
-		serverSaved[request.OperateID].Executable = request.Message
+		serverSaved[index].Executable = request.Message
 		return Response{
 			0, "OK",
 		}
@@ -155,8 +162,61 @@ func handleRequest(request Request) Response {
 		responseData, _ := json.Marshal(pair)
 		auth.ValidationKeyPairs = append(auth.ValidationKeyPairs, pair)
 		return Response{0, string(responseData)}
+	case "ExecInstall":
+		fmt.Println("Recevied [ExecInstall] Command!")
+		fmt.Println("Try to auto install id:" + strconv.Itoa(request.OperateID))
+		fmt.Println("From " + request.Message)
+		conn, err := http.Get(request.Message + "?id=" + strconv.Itoa(request.OperateID))
+		if err != nil {
+			fmt.Println("Get ExecInstallConfig error!")
+			return Response{-1, err.Error()}
+		}
+		defer conn.Body.Close()
+		respData, err2 := ioutil.ReadAll(conn.Body)
+		if err2 != nil {
+			fmt.Println("Read body error")
+			return Response{-1, err2.Error()}
+		}
+		var config ExecInstallConfig
+		err3 := json.Unmarshal(respData, &config)
+		if err2 != nil {
+			fmt.Println("Json Unmarshal error!")
+			return Response{-1, err3.Error()}
+		}
+		if !config.Success {
+			return Response{-1, "Get exec data error:" + config.Message}
+		}
+		// 解析成功且没有错误
+		go install(config)
+		return Response{0, "OK,Installing"}
+
 	}
 	return Response{
 		-1, "Unexpected err",
+	}
+}
+
+/*
+测试服务器的标准输入输出流是否可用。
+*/
+func ioCheck(request InterfaceRequest, c net.Conn) bool {
+	// 判定OpeareID的Key是否有效
+	if index := auth.FindValidationKey(request.Req.OperateID); index >= 0 {
+		// 发送给User认证
+		if auth.UserAuth(request.Req.OperateID, request.Auth, index) {
+			if searchRunningServerByID(request.Req.OperateID) >= 0 && serverSaved[searchServerByID(request.Req.OperateID)].Status == SERVER_STATUS_RUNNING {
+				return true
+				// 所有条件满足，返回True
+			} else {
+				connErrorToExit("Server not running or Invalid ServerID", c)
+				return false
+			}
+		} else {
+			connErrorToExit("Auth Failed", c)
+			return false
+		}
+	} else {
+		connErrorToExit("OperateID not exist in ValidationPairs.", c)
+		return false
 	}
 }

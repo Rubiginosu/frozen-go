@@ -45,11 +45,10 @@
 >希望对这个项目有兴趣的同志能联系到我们，告诉我们一些建议，这将会在程序的开发上帮助我们不少。<br/>
 >End<br />
 
-##8.操作系统兼容性测试
+## 8.操作系统兼容性测试
 >Windows:<br/>
->>windows7：daemon可运行<br />
->>windows server 2008：daemon可运行<br />
->>windows server 2012：daemon可运行<br />
+>>由于frozen的一些安全性要求，Windows不再支持
+>>Windows are no longer supported
 >Linux<br />
 >>debian：daemon可运行<br />
 >>CentOS:daemon可运行<br />
@@ -58,3 +57,4 @@
 >>ubuntu：可运行，衍生版kubuntu无法运行<br />
 >>SUSE:未测试<br />
 >>openSUSE：未测试<br />
+
