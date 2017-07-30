@@ -149,6 +149,7 @@ class FrozenGo
         while($resultBuf = socket_read($socket,1024)){
             $result .= $resultBuf;
         }
+        socket_close($socket);
         return json_decode($result);
     }
 }
