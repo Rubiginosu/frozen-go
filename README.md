@@ -46,9 +46,7 @@
 >End<br />
 
 ## 8.操作系统兼容性测试
->Windows:<br/>
->>由于frozen的一些安全性要求，Windows不再支持
->>Windows are no longer supported
+>Windows: 由于frozen的一些安全性要求，Windows不再支持<br/>
 >Linux<br />
 >>debian：daemon可运行<br />
 >>CentOS:daemon可运行<br />

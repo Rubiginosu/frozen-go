@@ -115,6 +115,10 @@ class FrozenGo
     public function setExecutable($id,$exec){
         return $this->SockResult("SetExecutable",$id,$exec);
     }
+    public function execInstall($url,$id){
+        return $this->SockResult("ExecInstall",$id,$url);
+
+    }
     // TODO 尽快修好！
     // 下面两个正在调试
     // !!! With Bug...
@@ -145,6 +149,7 @@ class FrozenGo
         while($resultBuf = socket_read($socket,1024)){
             $result .= $resultBuf;
         }
+        socket_close($socket);
         return json_decode($result);
     }
 }
