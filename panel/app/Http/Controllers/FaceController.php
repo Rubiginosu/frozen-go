@@ -19,36 +19,35 @@ class FaceController extends Controller
 {
     public function index(Request $request)
     {
-        if ($this->checkServe($request)) {
-            $this->autoloader($request);
-            return redirect()->action('PanelController@index');
-        } else {
-            $causes = $this->getCloseCauses($request);//获取失败原因
-            return view('FirstUse', ['causes' => $causes]);
+        if(DB::table('panel_config')->first()==null){
+            $this->autoloader_first($request);
+            $request->session()->put('fail_cause', '0001');
+            return view('first_regis',['issetuser'=>false]);
+        }else{
+            if ($this->checkServe($request)) {
+                $this->autoloader($request);
+                return redirect()->action('PanelController@index');
+            } else {
+                $causes = $this->getCloseCauses($request);//获取失败原因
+                return view('FirstUse', ['causes' => $causes]);
+            }
         }
     }
 
     function checkServe($request)
     {
-        $data = DB::table('panel_config')->first();
-        if ($data == null) {
-            $this->autoloader_first($request);
-            $request->session()->put('fail_cause', '0001');
-            return false;
-        } else {
-            if (DB::table('panel_config')->where('name', 'checkServe')->value('value') != true) return true;
-            $appid = DB::table('panel_config')->where('name', 'APPID')->value('value');
-            if (!empty($appid)) {
-                $url = "http://panel.dev/core/verify";
-                $random = str_random(10);
-                $key = $this->encrypt_self($appid, $request->getClientIp(), $random, date("YmdHis"));
-                $url_data = file_get_contents($url . '/' . $key . '/' . $random);
-                if ($url_data != "success") {
-                    $request->session()->put('fail_cause', $url_data);
-                    $status = false;
-                } else $status = true;
-            } else $status = false;
-        }
+        if (DB::table('panel_config')->where('name', 'checkServe')->value('value') != true) return true;
+        $appid = DB::table('panel_config')->where('name', 'APPID')->value('value');
+        if (!empty($appid)) {
+            $url = "http://panel.dev/core/verify";
+            $random = str_random(10);
+            $key = $this->encrypt_self($appid, $request->getClientIp(), $random, date("YmdHis"));
+            $url_data = file_get_contents($url . '/' . $key . '/' . $random);
+            if ($url_data != "success") {
+                $request->session()->put('fail_cause', $url_data);
+                $status = false;
+            } else $status = true;
+        } else $status = false;
         return $status;
     }
 
@@ -74,16 +73,26 @@ class FaceController extends Controller
         return $cause;
     }
 
-    function register($request)
+    public function register()
     {
-        DB::table('panel_config')->insert(['name' => 'adminname', 'value' => $request->input('username'), 'permission' => 'system'], ['name' => 'adminpass', 'value' => encrypt($request->input('password')), 'permission' => 'system']);
+        if(DB::table('panel_config')->where('name','adminname')->value('value')!=null) $issetuser=true;
+        else $issetuser=false;
+        return view('first_regis',['issetuser'=>$issetuser]);
+    }
 
+    public function register_post(Request $request){
+        DB::table('panel_config')->insert(['name' => 'adminname', 'value' => $request->input('username'), 'permission' => 'system']);
+        DB::table('panel_config')->insert(['name' => 'adminpass', 'value' => encrypt($request->input('password')), 'permission' => 'system']);
+        DB::table('panel_config')->insert(['name' => 'daemon_ip', 'value' => $request->input('ip'), 'permission' => 'system']);
+        DB::table('panel_config')->insert(['name' => 'daemon_port', 'value' => $request->input('port'), 'permission' => 'system']);
+        return redirect()->action('PanelController@index');
     }
 
     function autoLoader_first($request)
     {
-        DB::table('panel_config')->insert(['name' => 'APPID', 'value' => str_random(32) . $request->getClientIp() . date("Ymd"), 'permission' => 'system'], ['name' => 'checkServe', 'value' => 'false', 'permission' => 'system']);
-        return view('first_regis');
+        DB::table('panel_config')->insert(['name' => 'APPID', 'value' => str_random(32) . $request->getClientIp() . date("Ymd"), 'permission' => 'system']);
+        DB::table('panel_config')->insert(['name' => 'checkServe', 'value' => 'false', 'permission' => 'system']);
+        return redirect()->action('FaceController@register');
     }
 
     function autoloader($request)
