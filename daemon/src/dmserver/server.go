@@ -6,12 +6,11 @@ import (
 	"io/ioutil"
 	"os"
 	"os/exec"
+	"os/user"
 	"path/filepath"
 	"strconv"
-	"os/user"
 	"syscall"
 )
-
 
 // 服务器状态码
 // 已经关闭
@@ -22,31 +21,31 @@ const SERVER_STATUS_RUNNING = 1
 func (server *ServerLocal) EnvPrepare() error {
 	userUid := server.ID + config.DaemonServer.UserIdOffset
 	serverDataDir := "../servers/server" + strconv.Itoa(server.ID) // 在一开头就把serverDir算好，增加代码重用
-	fileInfo,err := os.Stat(serverDataDir)
-	if err  != nil {
+	fileInfo, err := os.Stat(serverDataDir)
+	if err != nil {
 		err := server.prepareDir(serverDataDir)
 		if err != nil {
 			return err
 		}
-	} else if fileInfo.Mode() != 0660{
-		os.Chmod(serverDataDir,0660)
+	} else if fileInfo.Mode() != 0660 {
+		os.Chmod(serverDataDir, 0660)
 	}
-	_,err2 := user.LookupId(strconv.Itoa(userUid))
+	_, err2 := user.LookupId(strconv.Itoa(userUid))
 	if err2 != nil {
-		cmd := exec.Command("/usr/sbin/useradd","fg"+strconv.Itoa(server.ID),"-u " + strconv.Itoa(userUid))
+		cmd := exec.Command("/usr/sbin/useradd", "fg"+strconv.Itoa(server.ID), "-u "+strconv.Itoa(userUid))
 		err := cmd.Run()
 		return err
 	}
-	userNow,_ := user.Current()
-	gid,_ :=strconv.Atoi(userNow.Gid)
-	os.Chown(serverDataDir,userUid,gid)
+	userNow, _ := user.Current()
+	gid, _ := strconv.Atoi(userNow.Gid)
+	os.Chown(serverDataDir, userUid, gid)
 
 	server.UserUid = userUid
 	return nil
 }
 
-func (server *ServerLocal) prepareDir(serverDataDir string) error{
-	err := os.MkdirAll(serverDataDir,660)
+func (server *ServerLocal) prepareDir(serverDataDir string) error {
+	err := os.MkdirAll(serverDataDir, 660)
 	return err
 }
 
@@ -172,6 +171,7 @@ func searchServerByID(id int) int {
 func GetServerSaved() []ServerLocal {
 	return serverSaved
 }
+
 // 搜索服务器的ID..返回index索引
 // 返回-1代表没找到
 func searchRunningServerByID(id int) int {

@@ -7,11 +7,14 @@ import (
 	"io"
 	"io/ioutil"
 	"net"
+	"net/http"
+	"strconv"
 )
 
 var config conf.Config
 var serverSaved []ServerLocal
 var servers []ServerRun
+var modules []string
 
 func connErrorToExit(errorInfo string, c net.Conn) {
 	res, _ := json.Marshal(Response{-1, errorInfo})
@@ -129,7 +132,6 @@ func handleRequest(request Request) Response {
 			servers[index].Close()
 		}
 
-
 		return Response{
 			0, "OK",
 		}
@@ -160,8 +162,53 @@ func handleRequest(request Request) Response {
 		responseData, _ := json.Marshal(pair)
 		auth.ValidationKeyPairs = append(auth.ValidationKeyPairs, pair)
 		return Response{0, string(responseData)}
+	case "ExecInstall":
+		conn, err := http.Get(request.Message + "?jarid=" + strconv.Itoa(request.OperateID))
+		if err != nil {
+			return Response{-1, err.Error()}
+		}
+		defer conn.Body.Close()
+		respData, err2 := ioutil.ReadAll(conn.Body)
+		if err2 != nil {
+			return Response{-1, err2.Error()}
+		}
+		var config ExecInstallConfig
+		err3 := json.Unmarshal(respData, &config)
+		if err2 != nil {
+			return Response{-1, err3.Error()}
+		}
+		if !config.Success {
+			return Response{-1, "Get exec data error:" + config.Message}
+		}
+		// 解析成功且没有错误
+		// TODO 编写安装模块的逻辑，以及安装逻辑
 	}
 	return Response{
 		-1, "Unexpected err",
+	}
+}
+
+/*
+测试服务器的标准输入输出流是否可用。
+*/
+func ioCheck(request InterfaceRequest, c net.Conn) bool {
+	// 判定OpeareID的Key是否有效
+	if index := auth.FindValidationKey(request.Req.OperateID); index >= 0 {
+		// 发送给User认证
+		if auth.UserAuth(request.Req.OperateID, request.Auth, index) {
+			if searchRunningServerByID(request.Req.OperateID) >= 0 && serverSaved[searchServerByID(request.Req.OperateID)].Status == SERVER_STATUS_RUNNING {
+				return true
+				// 所有条件满足，返回True
+			} else {
+				connErrorToExit("Server not running or Invalid ServerID", c)
+				return false
+			}
+		} else {
+			connErrorToExit("Auth Failed", c)
+			return false
+		}
+	} else {
+		connErrorToExit("OperateID not exist in ValidationPairs.", c)
+		return false
 	}
 }
