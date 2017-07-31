@@ -104,8 +104,8 @@ class FaceController extends Controller
 
     function autoLoader_first($request)
     {
-        //DB::table('panel_config')->insert(['name' => 'APPID', 'value' => str_random(32) . $request->getClientIp() . date("Ymd"), 'permission' => 'system']);
-        //DB::table('panel_config')->insert(['name' => 'checkServe', 'value' => 'false', 'permission' => 'system']);
+        DB::table('panel_config')->insert(['name' => 'APPID', 'value' => str_random(32) . $request->getClientIp() . date("Ymd"), 'permission' => 'system']);
+        DB::table('panel_config')->insert(['name' => 'checkServe', 'value' => 'false', 'permission' => 'system']);
         return redirect()->action('FaceController@register');
     }
 
