@@ -11,6 +11,8 @@ import (
 	"os/exec"
 	"path/filepath"
 	"strings"
+	"crypto/md5"
+	"errors"
 )
 
 func install(execConfig ExecInstallConfig) {
@@ -57,6 +59,23 @@ func (m *Module) install() error {
 	file.Write(b)
 	file.Close()
 	conn.Body.Close()
+	fileHash,_ := os.Open("../exec/~temp.zip")
+	md5hash := md5.New()
+	if _, err := io.Copy(md5hash, fileHash); err != nil {
+		fmt.Println("Copy", err)
+		return err
+	}
+
+	md5Sum := string(md5hash.Sum(nil))
+	fmt.Println(md5Sum)
+	if md5Sum != m.Md5 {
+		fmt.Print("Removing temp file....")
+		cmd := exec.Command("rm", "-rf", "../exec/~temp.zip")
+		cmd.Run()
+		fmt.Println("OK")
+		return errors.New("Md5 mismatch")
+	}
+
 	r, err := zip.OpenReader("../exec/~temp.zip")
 	dir := "../exec/" + m.Name + "/"
 	fmt.Println("Extracting archive")
@@ -76,9 +95,10 @@ func (m *Module) install() error {
 	cmd.Run()
 	fmt.Println("OK")
 	fmt.Print("Changing file mode...")
-	cmd2 := exec.Command("chmod", "-R", "../exec/"+m.Name)
-
+	cmd2 := exec.Command("chmod", strings.Split(m.Chmod,",")[0],"-R", "../exec/"+m.Name)
+	cmd3 := exec.Command("chown", strings.Split(m.Chmod,",")[1],"-R", "../exec/"+m.Name)
 	cmd2.Run()
+	cmd3.Run()
 	fmt.Println("OK")
 	if err1 != nil {
 		return err1
