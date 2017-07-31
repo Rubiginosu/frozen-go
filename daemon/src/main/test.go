@@ -1,9 +1,5 @@
-package main
 
-import (
-	"fmt"
-	"regexp"
-)
+package main
 
 func main() {
 	//b, _ := json.MarshalIndent(dmserver.ExecInstallConfig{
