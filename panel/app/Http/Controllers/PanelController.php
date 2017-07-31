@@ -14,35 +14,35 @@ use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Storage;
 use App\Http\Controllers\Controller;
 use Illuminate\Contracts\Encryption\DecryptException;
-//require_once __DIR__ . '/../../../public/FrozenGo.php';
+require_once __DIR__ . '/../../../public/FrozenGo.php';
 
 class PanelController extends Controller
 {
     public function index(Request $request)
     {
-        return true;
+        return view('server');
     }
 
-    function getsock()
+    private function getSock($ip,$port,$code)
     {
-        /**$address = '127.0.0.1';
-        $port = '52023';
-        $sock = socket_create(AF_INET, SOCK_STREAM, SOL_TCP);
-        socket_bind($sock, $address, $port);
-        socket_listen($sock, 5);
-        return $sock;*/
         $SDK=new FrozenGo();
-        $SDK->ip=DB::table('panel_config')->where('name','daemon_ip')->value('value');
-        $SDK->port=DB::table('panel_config')->where('name','daemon_port')->value('value');
-        $SDK->verifyCode=DB::table('panel_config')->where('name','daemon_verifyCode')->value('value');
+        if($ip==0||$port==0||$code==0){
+            $SDK->ip=DB::table('panel_config')->where('name','daemon_ip')->value('value');
+            $SDK->port=DB::table('panel_config')->where('name','daemon_port')->value('value');
+            $SDK->verifyCode=DB::table('panel_config')->where('name','daemon_verifyCode')->value('value');
+        }else{
+            $SDK->ip=$ip;
+            $SDK->port=$port;
+            $SDK->verifyCode=$code;
+        }
         $data=$SDK->getServerList();
-        //if($data[0]==-1) return false;
-        //else return $SDK;
+        if($data[0]==-1) return false;
+        else return $SDK;
     }
 
     public function portal(Request $request)
     {
-        $sock = $this->getsock();//获取socket对象
+        $sock = $this->getSock(0,0,0);//获取socket对象
         if($sock!=false){
             switch ($request->input('action')) {
                 case 'start': {
@@ -71,28 +71,37 @@ class PanelController extends Controller
         }
     }
 
-    function start($sock, $serid)
+    private function start($sock, $serid)
     {
 
         $sock->startServer($serid);
     }
 
-    function stop($sock, $serid)
+    private function stop($sock, $serid)
     {
         $sock->stopServer($serid);
     }
 
-    function restart($sock, $serid)
+    private function restart($sock, $serid)
     {
         $sock->startServer($serid);
         $sock->stopServer($serid);
     }
-    function createServer($sock, $serid){
+    private function createServer($sock, $serid){
         $data=$this->createServer($serid);
         if($data=='OK'){
             return true;
         }else{
             return $data;
         }
+    }
+
+    public function try_bind(Request $request){
+        $ip=$request->input('ip');
+        $port=$request->input('port');
+        $code=$request->input('code');
+        $sock=$this->getSock($ip,$port,$code);
+        if(!$sock) return true;
+        else return false;
     }
 }
