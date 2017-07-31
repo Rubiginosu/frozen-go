@@ -11,8 +11,8 @@ import (
 	"os/exec"
 	"path/filepath"
 	"strings"
-	"crypto/md5"
 	"errors"
+	"crypto/md5"
 )
 
 func install(execConfig ExecInstallConfig) {
@@ -47,7 +47,7 @@ func isRelyInModules(installed string, rely Module) bool {
 	return strings.Index(installed, rely.Name) >= 0
 }
 func (m *Module) install() error {
-	fmt.Println("Installing module" + m.Name)
+	fmt.Println("Installing module " + m.Name)
 	conn, err := http.Get(m.Download)
 	if err != nil {
 		return err
@@ -56,24 +56,21 @@ func (m *Module) install() error {
 	file, err1 := os.Create("../exec/~temp.zip")
 	b, _ := ioutil.ReadAll(conn.Body)
 	fmt.Println("Download " + m.Download + " OK.sud")
+
+
 	file.Write(b)
 	file.Close()
 	conn.Body.Close()
-	fileHash,_ := os.Open("../exec/~temp.zip")
-	md5hash := md5.New()
-	if _, err := io.Copy(md5hash, fileHash); err != nil {
-		fmt.Println("Copy", err)
-		return err
-	}
 
-	md5Sum := string(md5hash.Sum(nil))
-	fmt.Println(md5Sum)
-	if md5Sum != m.Md5 {
-		fmt.Print("Removing temp file....")
-		cmd := exec.Command("rm", "-rf", "../exec/~temp.zip")
-		cmd.Run()
-		fmt.Println("OK")
-		return errors.New("Md5 mismatch")
+	isMatch,err2 := md5Check("../exec/~temp.zip",m.Md5)
+	if err2 != nil {
+		fmt.Println("Error with md5 check:" + err2.Error())
+		return err2
+	} else if !isMatch{
+		fmt.Println("Md5 mismatch")
+		return errors.New("Md5 mismatch.")
+	} else {
+		fmt.Println("Md5 check done.")
 	}
 
 	r, err := zip.OpenReader("../exec/~temp.zip")
@@ -125,6 +122,16 @@ func (e *ExecInstallConfig) downloadExecAndConf() {
 	}
 	io.Copy(file, conn.Body)
 	file.Close()
+	res,err3 := md5Check("../exec/" + elements[len(elements)-1],e.Md5)
+	if err3 != nil {
+		fmt.Println("Error compute md5:"+err3.Error())
+	}
+	if !res {
+		fmt.Println("Md5 check failed")
+		return
+	} else {
+		fmt.Println("Md5 check ok")
+	}
 	conn.Body.Close()
 	execConfFile, err2 := os.Create("../exec/" + e.StartConf.Name + ".json")
 	if err2 != nil {
@@ -134,4 +141,14 @@ func (e *ExecInstallConfig) downloadExecAndConf() {
 	execConfFile.Write(b)
 	execConfFile.Close()
 	fmt.Println("Done")
+}
+func md5Check(name string,sum string) (bool,error){
+	fmt.Println("Checking md5 sum " + name)
+	data,err := ioutil.ReadFile(name)
+	if err != nil {
+		return false,err
+	}
+	md5bytes := md5.Sum(data)
+	fmt.Println("Md5:"+fmt.Sprintf("%x",md5bytes))
+	return fmt.Sprintf("%x",md5bytes) == sum,nil
 }

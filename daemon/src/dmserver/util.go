@@ -15,7 +15,7 @@ func IsServerAvaible(serverid int) bool {
 }
 
 func IsDirMounted(dir string) (bool,error){
-	cmd := exec.Command("/bin/df")
+	cmd := exec.Command("/bin/df",dir)
 	resData,err := cmd.Output()
 	if err != nil {
 		return false,err

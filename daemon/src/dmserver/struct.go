@@ -28,6 +28,7 @@ type ExecInstallConfig struct {
 	Url       string
 	StartConf ExecConf
 	Message   string
+	Md5       string
 }
 type ExecConf struct {
 	Name                 string
@@ -37,6 +38,7 @@ type ExecConf struct {
 	PlayExitRegexp       string // 判定有人退出的表达式
 	MaxMemory            int    // 内存限制
 	MaxHardDisk          int
+	Mount                []string
 	StoppedServerCommand string // 服务器软退出指令
 }
 type Module struct {
