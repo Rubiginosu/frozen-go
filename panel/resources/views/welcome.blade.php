@@ -83,11 +83,11 @@
                 </div>
 
                 <div class="links">
-                    <a href="#">使用文档</a>
+                    <a href="https://github.com/Rubiginosu/frozen-go/releases">使用文档</a>
                     <a href="#">技术支持</a>
-                    <a href="#">开始使用</a>
-                    <a href="#">关于我们</a>
-                    <a href="#">GitHub</a>
+                    <a href="{{ url('/index') }}">开始使用</a>
+                    <a href="https://fg.mcpe.cc/">关于我们</a>
+                    <a href="https://github.com/Rubiginosu/frozen-go">GitHub</a>
                 </div>
             </div>
         </div>
