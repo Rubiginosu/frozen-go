@@ -21,7 +21,7 @@ type DaemonServer struct {
 	VerifyCode                      string
 	DefaultBufLength                int
 	ValidationKeyOutDateTimeSeconds float64
-	UserIdOffset                    int
+	UserId                          int
 }
 
 type serverManager struct {

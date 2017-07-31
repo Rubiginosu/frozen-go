@@ -166,7 +166,7 @@ func handleRequest(request Request) Response {
 		fmt.Println("Recevied [ExecInstall] Command!")
 		fmt.Println("Try to auto install id:" + strconv.Itoa(request.OperateID))
 		fmt.Println("From " + request.Message)
-		conn, err := http.Get(request.Message + "?id=" + strconv.Itoa(request.OperateID))
+		conn, err := http.Get(request.Message + "?action=GetJar&JarID=" + strconv.Itoa(request.OperateID))
 		if err != nil {
 			fmt.Println("Get ExecInstallConfig error!")
 			return Response{-1, err.Error()}
