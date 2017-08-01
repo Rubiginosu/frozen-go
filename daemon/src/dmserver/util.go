@@ -2,7 +2,6 @@ package dmserver
 
 import (
 	"os/exec"
-	"strings"
 )
 
 func IsServerAvaible(serverid int) bool {
@@ -14,13 +13,7 @@ func IsServerAvaible(serverid int) bool {
 	return false
 }
 
-func IsDirMounted(dir string) (bool,error){
-	cmd := exec.Command("/bin/df",dir)
-	resData,err := cmd.Output()
-	if err != nil {
-		return false,err
-	}
-	res := string(resData)
-	n := strings.Index(res,"loop")
-	return n>=0,nil
+func autoMakeDir(name string) {
+	cmd := exec.Command("mkdir", "-p", name)
+	cmd.Run()
 }

@@ -13,8 +13,6 @@ int m=atoi(argv[2]);
 int uid=atoi(argv[1]); 
 char* home=argv[3];
 char* sv=argv[4];
-rlim_new.rlim_cur = rlim_new.rlim_max =80;
-setrlimit(RLIMIT_NPROC, &rlim_new);
 rlim_new.rlim_cur = rlim_new.rlim_max =m*1024*1024; 
 setrlimit(RLIMIT_AS, &rlim_new);
 chroot(home);

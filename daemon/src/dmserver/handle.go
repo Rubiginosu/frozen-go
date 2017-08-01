@@ -79,7 +79,7 @@ func handleRequest(request Request) Response {
 			serverId = serverSaved[len(serverSaved)-1].ID + 1
 		}
 
-		serverSaved = append(serverSaved, ServerLocal{serverId, request.Message, "", 0, 0})
+		serverSaved = append(serverSaved, ServerLocal{serverId, request.Message, "", 0, 1024,1024})
 		serverSaved[len(serverSaved)-1].EnvPrepare()
 		// 序列化b来储存。
 		b, err := json.MarshalIndent(serverSaved, "", "\t")

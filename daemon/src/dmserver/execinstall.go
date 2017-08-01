@@ -2,7 +2,9 @@ package dmserver
 
 import (
 	"archive/zip"
+	"crypto/md5"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"io"
 	"io/ioutil"
@@ -11,12 +13,10 @@ import (
 	"os/exec"
 	"path/filepath"
 	"strings"
-	"errors"
-	"crypto/md5"
 )
 
 func install(execConfig ExecInstallConfig) {
-	modulesData,err := ioutil.ReadFile(config.ServerManager.Modules)
+	modulesData, err := ioutil.ReadFile(config.ServerManager.Modules)
 	if err != nil {
 		fmt.Println(err)
 		return
@@ -24,7 +24,7 @@ func install(execConfig ExecInstallConfig) {
 
 	toBeInstall := needInstallModules(string(modulesData), execConfig.Rely)
 	for i := 0; i < len(toBeInstall); i++ {
-		fmt.Println("Attemp to install module:" +toBeInstall[i].Name)
+		fmt.Println("Attemp to install module:" + toBeInstall[i].Name)
 		toBeInstall[i].install()
 	}
 
@@ -57,16 +57,15 @@ func (m *Module) install() error {
 	b, _ := ioutil.ReadAll(conn.Body)
 	fmt.Println("Download " + m.Download + " OK.sud")
 
-
 	file.Write(b)
 	file.Close()
 	conn.Body.Close()
 
-	isMatch,err2 := md5Check("../exec/~temp.zip",m.Md5)
+	isMatch, err2 := md5Check("../exec/~temp.zip", m.Md5)
 	if err2 != nil {
 		fmt.Println("Error with md5 check:" + err2.Error())
 		return err2
-	} else if !isMatch{
+	} else if !isMatch {
 		fmt.Println("Md5 mismatch")
 		return errors.New("Md5 mismatch.")
 	} else {
@@ -92,20 +91,19 @@ func (m *Module) install() error {
 	cmd.Run()
 	fmt.Println("OK")
 	fmt.Print("Changing file mode...")
-	cmd2 := exec.Command("chmod", strings.Split(m.Chmod,",")[0],"-R", "../exec/"+m.Name)
-	cmd3 := exec.Command("chown", strings.Split(m.Chmod,",")[1],"-R", "../exec/"+m.Name)
+	cmd2 := exec.Command("chmod", strings.Split(m.Chmod, ",")[0], "-R", "../exec/"+m.Name)
+	cmd3 := exec.Command("chown", strings.Split(m.Chmod, ",")[1], "-R", "../exec/"+m.Name)
 	cmd2.Run()
 	cmd3.Run()
 	fmt.Println("OK")
 	if err1 != nil {
 		return err1
 	}
-	modulesFile,_ := os.OpenFile(config.ServerManager.Modules,os.O_APPEND | os.O_WRONLY,0777)
+	modulesFile, _ := os.OpenFile(config.ServerManager.Modules, os.O_APPEND|os.O_WRONLY, 0777)
 	modulesFile.Write([]byte(m.Name + ","))
 	modulesFile.Close()
 	return nil
 }
-
 
 func (e *ExecInstallConfig) downloadExecAndConf() {
 	fmt.Println("Downloading file and conf")
@@ -122,9 +120,9 @@ func (e *ExecInstallConfig) downloadExecAndConf() {
 	}
 	io.Copy(file, conn.Body)
 	file.Close()
-	res,err3 := md5Check("../exec/" + elements[len(elements)-1],e.Md5)
+	res, err3 := md5Check("../exec/"+elements[len(elements)-1], e.Md5)
 	if err3 != nil {
-		fmt.Println("Error compute md5:"+err3.Error())
+		fmt.Println("Error compute md5:" + err3.Error())
 	}
 	if !res {
 		fmt.Println("Md5 check failed")
@@ -142,13 +140,13 @@ func (e *ExecInstallConfig) downloadExecAndConf() {
 	execConfFile.Close()
 	fmt.Println("Done")
 }
-func md5Check(name string,sum string) (bool,error){
+func md5Check(name string, sum string) (bool, error) {
 	fmt.Println("Checking md5 sum " + name)
-	data,err := ioutil.ReadFile(name)
+	data, err := ioutil.ReadFile(name)
 	if err != nil {
-		return false,err
+		return false, err
 	}
 	md5bytes := md5.Sum(data)
-	fmt.Println("Md5:"+fmt.Sprintf("%x",md5bytes))
-	return fmt.Sprintf("%x",md5bytes) == sum,nil
+	fmt.Println("Md5:" + fmt.Sprintf("%x", md5bytes))
+	return fmt.Sprintf("%x", md5bytes) == sum, nil
 }

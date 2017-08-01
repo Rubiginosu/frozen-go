@@ -36,8 +36,6 @@ type ExecConf struct {
 	StartServerRegexp    string // 判定服务器成功开启的正则表达式
 	NewPlayerJoinRegexp  string // 判定新人加入的表达式
 	PlayExitRegexp       string // 判定有人退出的表达式
-	MaxMemory            int    // 内存限制
-	MaxHardDisk          int
 	Mount                []string
 	StoppedServerCommand string // 服务器软退出指令
 }
@@ -49,16 +47,22 @@ type Module struct {
 }
 
 type ServerLocal struct {
-	ID         int
-	Name       string
-	Executable string
-	Status     int
-	UserUid    int
+	ID          int
+	Name        string
+	Executable  string
+	Status      int
+	MaxMemory   int // 内存限制
+	MaxHardDisk int
 }
 
 type ServerRun struct {
-	ID     int
-	Cmd    *exec.Cmd
-	Stdin  io.WriteCloser
-	Stdout io.ReadCloser
+	ID       int
+	Cmd      *exec.Cmd
+	Stdin    io.WriteCloser
+	Stdout   io.ReadCloser
+	ToOutput OutputInfo
+}
+type OutputInfo struct {
+	IsOutput bool
+	To       *io.WriteCloser
 }

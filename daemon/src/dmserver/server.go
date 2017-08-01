@@ -1,8 +1,10 @@
 package dmserver
 
 import (
+	"bufio"
 	"encoding/json"
-	"io/ioutil"
+	"fmt"
+	"io"
 	"os"
 	"os/exec"
 	"path/filepath"
@@ -20,14 +22,36 @@ func (s *ServerRun) Close() {
 
 func (server *ServerLocal) Start() error {
 	server.EnvPrepare()
-	execConf,err0 := server.loadExecutableConfig()
+	execConf, err0 := server.loadExecutableConfig()
 	if err0 != nil {
 		return err0
 	}
-	cmd := exec.Command("server",strconv.Itoa(server.UserUid),strconv.Itoa(execConf.MaxMemory),
-		"../servers/server" + strconv.Itoa(server.ID),"../servers/server" + strconv.Itoa(server.ID) + "/serverData")
-	err := cmd.Run()
+	cmd := exec.Command("./server", strconv.Itoa(config.DaemonServer.UserId), strconv.Itoa(server.MaxMemory),
+		"../servers/server"+strconv.Itoa(server.ID),
+		"../servers/server"+strconv.Itoa(server.ID)+"/serverData", execConf.Command)
+	err := cmd.Start()
+	stdinPipe, _ := cmd.StdinPipe()
+	stdoutPipe, _ := cmd.StdoutPipe()
+	servers = append(servers, ServerRun{
+		server.ID,
+		cmd,
+		stdinPipe,
+		stdoutPipe,
+		OutputInfo{false, nil},
+	})
+	//go servers[len(servers)-1].ProcessOutput()
 	return err
+}
+
+func (serRun *ServerRun) ProcessOutput() {
+	buf := bufio.NewReader(serRun.Stdout)
+	for {
+		line, err := buf.ReadString('\n') //以'\n'为结束符读入一行
+		if err != nil || io.EOF == err {
+			break
+		}
+		fmt.Println(line)
+	}
 }
 
 func outputListOfServers() Response {
