@@ -158,6 +158,6 @@ class PanelController extends Controller
 
     private function gate_One()
     {//审查门，用于检查各项操作是否为合法操作
-        //TODO:暂时不启用本功能，将用于用户开启安全模式之后的措施
+        //TODO:暂时不启用本功能，,将用于用户开启安全模式之后的措施
     }
 }
