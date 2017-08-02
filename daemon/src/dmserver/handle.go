@@ -5,7 +5,6 @@ import (
 	"conf"
 	"encoding/json"
 	"fmt"
-	"io"
 	"io/ioutil"
 	"net"
 	"net/http"
@@ -42,20 +41,7 @@ func handleConnection(c net.Conn) {
 	if err != nil {
 		connErrorToExit(err.Error(), c)
 	}
-	if request.Req.Method == "GetInput" {
-		if ioCheck(request, c) {
-			for {
-				io.Copy(servers[searchRunningServerByID(request.Req.OperateID)].Stdin, c)
-			}
-		}
-
-	} else if request.Req.Method == "GetOutput" {
-		if ioCheck(request, c) {
-			for {
-				io.Copy(c, servers[searchRunningServerByID(request.Req.OperateID)].Stdout)
-			}
-		}
-	} else if request.Auth == config.DaemonServer.VerifyCode {
+	if request.Auth == config.DaemonServer.VerifyCode {
 		res, _ := json.Marshal(handleRequest(request.Req))
 		c.Write(res)
 		c.Close()
@@ -79,7 +65,7 @@ func handleRequest(request Request) Response {
 			serverId = serverSaved[len(serverSaved)-1].ID + 1
 		}
 
-		serverSaved = append(serverSaved, ServerLocal{serverId, request.Message, "", 0, 1024,1024})
+		serverSaved = append(serverSaved, ServerLocal{serverId, request.Message, "", 0, 1024, 1024})
 		serverSaved[len(serverSaved)-1].EnvPrepare()
 		// 序列化b来储存。
 		b, err := json.MarshalIndent(serverSaved, "", "\t")
@@ -186,19 +172,19 @@ func handleRequest(request Request) Response {
 
 	case "SetServerConfig":
 		var elements []ServerAttrElement
-		err := json.Unmarshal([]byte(request.Message),&elements)
+		err := json.Unmarshal([]byte(request.Message), &elements)
 		if err != nil {
-			return Response{-1,"Json decoding error:"+err.Error()}
+			return Response{-1, "Json decoding error:" + err.Error()}
 		}
-		err2 := setServerConfigAll(elements,index)
-		if err2 != nil{
-			return Response{-1,err2.Error()}
+		err2 := setServerConfigAll(elements, index)
+		if err2 != nil {
+			return Response{-1, err2.Error()}
 		}
-		return Response{0,fmt.Sprintf("OK,Setted %d element(s)",len(elements))}
+		return Response{0, fmt.Sprintf("OK,Setted %d element(s)", len(elements))}
 	case "GetServerConfig":
-		if index >= 0{
-			b,_ := json.Marshal(serverSaved[index])
-			return Response{0,string(b)}
+		if index >= 0 {
+			b, _ := json.Marshal(serverSaved[index])
+			return Response{0, string(b)}
 		}
 
 	}
@@ -207,35 +193,11 @@ func handleRequest(request Request) Response {
 	}
 }
 
-/*
-测试服务器的标准输入输出流是否可用。
-*/
-func ioCheck(request InterfaceRequest, c net.Conn) bool {
-	// 判定OpeareID的Key是否有效
-	if index := auth.FindValidationKey(request.Req.OperateID); index >= 0 {
-		// 发送给User认证
-		if auth.UserAuth(request.Req.OperateID, request.Auth, index) {
-			if searchRunningServerByID(request.Req.OperateID) >= 0 && serverSaved[searchServerByID(request.Req.OperateID)].Status == SERVER_STATUS_RUNNING {
-				return true
-				// 所有条件满足，返回True
-			} else {
-				connErrorToExit("Server not running or Invalid ServerID", c)
-				return false
-			}
-		} else {
-			connErrorToExit("Auth Failed", c)
-			return false
-		}
-	} else {
-		connErrorToExit("OperateID not exist in ValidationPairs.", c)
-		return false
-	}
-}
-func setServerConfigAll(attrs []ServerAttrElement,index int) error{
-	for i:=0;i<len(attrs);i++{
-		switch attrs[i].AttrName{
+func setServerConfigAll(attrs []ServerAttrElement, index int) error {
+	for i := 0; i < len(attrs); i++ {
+		switch attrs[i].AttrName {
 		case "MaxMemory":
-			mem,err := strconv.Atoi(attrs[i].AttrValue)
+			mem, err := strconv.Atoi(attrs[i].AttrValue)
 			if err != nil {
 				return err
 			}
@@ -243,7 +205,7 @@ func setServerConfigAll(attrs []ServerAttrElement,index int) error{
 		case "Executable":
 			serverSaved[index].Executable = attrs[i].AttrValue
 		case "MaxHardDisk":
-			disk,err := strconv.Atoi(attrs[i].AttrValue)
+			disk, err := strconv.Atoi(attrs[i].AttrValue)
 			if err != nil {
 				return err
 			}
@@ -254,4 +216,3 @@ func setServerConfigAll(attrs []ServerAttrElement,index int) error{
 	}
 	return nil
 }
-

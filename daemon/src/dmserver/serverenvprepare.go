@@ -46,6 +46,7 @@ func (server *ServerLocal) EnvPrepare() error{
 		// 这个谁说的准？ 哈哈～
 	}
 	// 挂载回环文件
+	fmt.Println("Mounting loop file")
 	cmd := exec.Command("/bin/mount", "-o", "loop",serverDataDir+"/server" + strconv.Itoa(server.ID) + ".loop", serverDataDir)
 	cmd.Run()
 
@@ -115,7 +116,7 @@ func mountDirs(dirs []string, serverDataDir string) {
 }
 
 func mountDir(dir, serverDataDir string) {
-	fmt.Printf("Mounting Dir:%s",dir)
+	fmt.Printf("Mounting Dir:%s\n",dir)
 	autoMakeDir(serverDataDir + dir)
 	cmd := exec.Command("/bin/mount", "-o", "bind", dir, serverDataDir+dir)
 	cmd.Run()

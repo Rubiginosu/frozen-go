@@ -2,6 +2,7 @@ package dmserver
 
 import (
 	"os/exec"
+	"fmt"
 )
 
 func IsServerAvaible(serverid int) bool {

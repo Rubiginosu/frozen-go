@@ -13,7 +13,7 @@ import (
 
 // 服务器状态码
 // 已经关闭
-const SERVER_STATUS_CLOSED = 0
+//const SERVER_STATUS_CLOSED = 0
 const SERVER_STATUS_RUNNING = 1
 
 func (s *ServerRun) Close() {
@@ -27,41 +27,50 @@ func (server *ServerLocal) Start() error {
 		return err0
 	}
 	server.MaxMemory = 1024
-	cmd := exec.Command("./server", "-uid=" + strconv.Itoa(config.DaemonServer.UserId),
-		"-mem="+strconv.Itoa(server.MaxMemory),
-		"-chr="+"../servers/server"+strconv.Itoa(server.ID),
-		 "-cmd="+execConf.Command)
-	err := cmd.Start()
+	cmd := exec.Command("./server", "-uid="+strconv.Itoa(config.DaemonServer.UserId), "-mem="+strconv.Itoa(server.MaxMemory), "-chr="+"../servers/server"+strconv.Itoa(server.ID), "-cmd="+execConf.Command)
+
+	stdoutPipe, err := cmd.StdoutPipe()
+
 	if err != nil {
 		return err
 	}
-	stdinPipe, _ := cmd.StdinPipe()
-	stdoutPipe, _ := cmd.StdoutPipe()
-	servers = append(servers, ServerRun{
-		server.ID,
-		cmd,
-		stdinPipe,
-		stdoutPipe,
-		OutputInfo{false, nil},
-	})
 
+	stdinPipe,err2 := cmd.StdinPipe()
+	if err2 != nil {
+		return err2
+	}
+	servers = append(servers,ServerRun{
+		server.ID,
+		OutputInfo{false,nil},
+		cmd,
+		&stdinPipe,
+		&stdoutPipe,
+	})
+	err3 := cmd.Start()
+	if err3 != nil {
+		return err3
+	}
 	go servers[len(servers)-1].ProcessOutput()
 	return nil
 }
 
-func (serRun *ServerRun) ProcessOutput() {
-
-	buf := bufio.NewReader(serRun.Stdout)
+func (s *ServerRun)ProcessOutput() {
+	fmt.Println(s.Cmd.Process.Pid)
+	buf := bufio.NewReader(*s.StdoutPipe)
 	for {
-		if serRun.Cmd.ProcessState.Exited(){
-			return
-		}
-		line, err := buf.ReadString('\n') //以'\n'为结束符读入一行
+		line, err := buf.ReadBytes('\n') //以'\n'为结束符读入一行
 		if err != nil || io.EOF == err {
 			break
 		}
-		fmt.Println(line)
+		fmt.Printf("%s",line)
+		//s.processOutputLine(string(line)) // string对与正则更加友好吧
+		s.ToOutput.IsOutput = true
+		if s.ToOutput.IsOutput{
+			s.ToOutput.To = make(chan []byte,100)
+			s.ToOutput.To <- line
+		}
 	}
+
 }
 
 func outputListOfServers() Response {

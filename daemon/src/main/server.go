@@ -2,9 +2,7 @@ package main
 
 import (
 	"flag"
-	"fmt"
 	"os"
-	"os/user"
 	"regexp"
 	"syscall"
 )
@@ -29,13 +27,8 @@ func main() {
 	flag.StringVar(&command, "cmd", "", "Command to be run")
 	flag.StringVar(&chroot, "chr", "", "Chroot jail for pro") // 申明并解析参数
 	flag.Parse()
-	usrCur, _ := user.Current()
-	fmt.Printf("User name %s", usrCur.Uid)
-	if usrCur.Uid != "0" {
-		fmt.Printf("Please run as root.")
-		os.Exit(-250)
-	}
 	syscall.Unshare(syscall.CLONE_NEWUTS | syscall.CLONE_NEWIPC | syscall.CLONE_FILES | syscall.CLONE_FS)
+
 	err := syscall.Setrlimit(syscall.RLIMIT_AS, &syscall.Rlimit{
 		Cur: uint64(mem * 1048576),
 		Max: uint64(mem * 1048576),

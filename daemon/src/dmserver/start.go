@@ -12,8 +12,10 @@ import (
 
 func StartDaemonServer(conf conf.Config) {
 	config = conf
+	go webskt()
 	b, _ := ioutil.ReadFile(config.ServerManager.Servers)
 	err2 := json.Unmarshal(b, &serverSaved)
+
 	if err2 != nil {
 		fmt.Println(err2)
 		os.Exit(-2)
@@ -35,7 +37,7 @@ func StartDaemonServer(conf conf.Config) {
 }
 func StopDaemonServer() error {
 	for i := 0; i < len(servers); i++ {
-		servers[i].Cmd.Process.Kill()
+
 	}
 	for i := 0; i < len(serverSaved); i++ {
 		serverSaved[i].Status = 0
