@@ -42,11 +42,12 @@ class PanelController extends Controller
 
     public function portal(Request $request)
     {
+        //操作这里需要至少buyer的权限（同play_server_id)
         $sock = $this->getSock(0, 0, 0);//获取socket对象
         if ($sock != false) {
             switch ($request->input('action')) {
                 case 'start': {
-                    if ($this->chkUsers($request, $request->session()->get('userid'), $request->session()->get('login_token'), encrypt("startServer"), $request->input('id'))) {
+                    if ($this->chkUsers($request, $request->session()->get('userid'), $request->session()->get('login_token'), encrypt("startServer"), $request->input('serverid'))) {
                         $this->start($sock, $request->input('id'));
                         return true;
                     } else return false;
@@ -128,7 +129,7 @@ class PanelController extends Controller
         return $status;
     }
 
-    private function chkUsers($request, $uid, $token, $actionSign, $opeareID)
+    private function chkUsers($request, $uid, $token, $actionSign, $serverID, $playserverID)
     {
         //TODO:未完持续........
         try {
@@ -136,16 +137,28 @@ class PanelController extends Controller
         } catch (DecryptException $e) {
             return false;
         }
-        $userData = DB::table('panel_users')->where('id', $uid)->first();
+        $userData = $this->getUser($request);
         if ($token === $userData->token) {
-            //这里细分if是为了Log更有意义
-            if (DB::table('panel_actions')->where('name', $sign)->value('permission') == $userData->permission || $userData->permission == "superadmin" || ($userData->permission == "admin" && ($userData->group_server == $opeareID) || DB::table('panel_servers_relations')->where('')) || ($userData->permission == "buyer" && $userData->group == $opeareID)) {
-                $permitID = str_random(32);
-                $sessionLog = $permitID . '.' . $sign;
-                $request->session()->put('permitID', $sessionLog);
-                DB::table('panel_actions')->where('name', $sign)->update(['lastest_user' => $userData->username, 'permitID' => $permitID]);
-                Log::info("准许用户：" . $userData->username . "进行：" . $sign . "操作！");
-                return true;
+            //这先验证当前用户是否有权限操作当前服务器，再验证
+            if ($this->relations_users($sign, $userData->permission)) {
+                if ($serverID != "00" && $playserverID != "00" && $this->relations_server($serverID, $playserverID, $this->getUser($request), 1)) {//不等于00代表本操作是需要验证serverid的
+                    $permitID = str_random(32);
+                    $sessionLog = $permitID . '.' . $sign;
+                    $request->session()->put('permitID', $sessionLog);
+                    DB::table('panel_actions')->where('name', $sign)->update(['lastest_user' => $userData->username, 'permitID' => $permitID]);
+                    Log::info("准许用户：" . $userData->username . "进行：" . $sign . "操作！");
+                    return true;
+                } else if ($serverID != "00" && $playserverID == "00" && $this->relations_server($serverID, $playserverID, $this->getUser($request), 2)) {
+                    $permitID = str_random(32);
+                    $sessionLog = $permitID . '.' . $sign;
+                    $request->session()->put('permitID', $sessionLog);
+                    DB::table('panel_actions')->where('name', $sign)->update(['lastest_user' => $userData->username, 'permitID' => $permitID]);
+                    Log::info("准许用户：" . $userData->username . "进行：" . $sign . "操作！");
+                    return true;
+                } else {
+                    Log::info("进行用户权限检查时发生错误：用户（" . $userData->username . "）没有进行操作：" . $sign . "的权限！");
+                    return false;
+                }
             } else {
                 Log::info("进行用户权限检查时发生错误：用户（" . $userData->username . "）没有进行操作：" . $sign . "的权限！");
                 return false;
@@ -158,6 +171,49 @@ class PanelController extends Controller
 
     private function gate_One()
     {//审查门，用于检查各项操作是否为合法操作
-        //TODO:暂时不启用本功能，,将用于用户开启安全模式之后的措施
+        //TODO:暂时不启用本功能，将用于用户开启安全模式之后的措施
+    }
+
+    private function relations_users($action, $obj)
+    {
+        //绘制一个恶心的关系图,证明obj是不是action操作的儿子.首先提取所有有权限对action进行操作的权限名
+        $actiondata = DB::table('panel_relations')->where('basic_action', $action)->get();
+        $alldata = DB::table('panel_relations')->where('group', 1)->get();
+        $arr = array();
+        foreach ($actiondata as $va) {
+            $arr = array_add($va->name);
+        }
+        foreach ($alldata as $value) {
+            foreach ($arr as $values) {
+                if ($value->permission_bind == $values) $arr = array_add($value->name);
+            }
+        }
+        $perdataObj2 = DB::table('panel_relations')->where([['group', '1'], ['name', $obj]])->first();
+    }
+
+    private function relations_server($obj1, $obj2, $user, $level)
+    {
+        //证明这个obj2游戏服务器属于obj1主服务器，并且user也属于这个服务器(前提是进行了relations_users操作并且true）
+        $flag = false;
+        $serverdata = DB::table('panel_servers_relations')->where('serverid', $obj1)->get();
+        if ($level == 1) {//1代表版主级别，为多服务器做准备
+            foreach ($serverdata as $va) {
+                if ($va->play_serverid == $obj2 && $user->group_server == $obj1 && $user->group == $obj2) {
+                    $flag = true;
+                    break;
+                }
+            }
+        } else {
+            if ($obj1 == $user->group_server) $flag = true;
+        }
+        if ($flag) return true;
+        else return false;
+    }
+
+    private function getUser(Request $request)
+    {
+        $userid = $request->session()->get('userid');
+        $data = DB::table('panel_users')->where('id', $userid)->first();
+        return $data;
     }
 }
