@@ -136,12 +136,6 @@ func handleRequest(request Request) Response {
 			0, "OK",
 		}
 
-	case "SetExecutable":
-		serverSaved[index].Executable = request.Message
-		return Response{
-			0, "OK",
-		}
-
 	case "GetPairs":
 		if !IsServerAvaible(request.OperateID) {
 			return Response{
@@ -190,6 +184,23 @@ func handleRequest(request Request) Response {
 		go install(config)
 		return Response{0, "OK,Installing"}
 
+	case "SetServerConfig":
+		var elements []ServerAttrElement
+		err := json.Unmarshal([]byte(request.Message),&elements)
+		if err != nil {
+			return Response{-1,"Json decoding error:"+err.Error()}
+		}
+		err2 := setServerConfigAll(elements,index)
+		if err2 != nil{
+			return Response{-1,err2.Error()}
+		}
+		return Response{0,fmt.Sprintf("OK,Setted %d element(s)",len(elements))}
+	case "GetServerConfig":
+		if index >= 0{
+			b,_ := json.Marshal(serverSaved[index])
+			return Response{0,string(b)}
+		}
+
 	}
 	return Response{
 		-1, "Unexpected err",
@@ -220,3 +231,27 @@ func ioCheck(request InterfaceRequest, c net.Conn) bool {
 		return false
 	}
 }
+func setServerConfigAll(attrs []ServerAttrElement,index int) error{
+	for i:=0;i<len(attrs);i++{
+		switch attrs[i].AttrName{
+		case "MaxMemory":
+			mem,err := strconv.Atoi(attrs[i].AttrValue)
+			if err != nil {
+				return err
+			}
+			serverSaved[index].MaxMemory = mem
+		case "Executable":
+			serverSaved[index].Executable = attrs[i].AttrValue
+		case "MaxHardDisk":
+			disk,err := strconv.Atoi(attrs[i].AttrValue)
+			if err != nil {
+				return err
+			}
+			serverSaved[index].MaxHardDisk = disk
+		case "Name":
+			serverSaved[index].Name = attrs[i].AttrValue
+		}
+	}
+	return nil
+}
+

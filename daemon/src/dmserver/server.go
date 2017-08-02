@@ -26,10 +26,15 @@ func (server *ServerLocal) Start() error {
 	if err0 != nil {
 		return err0
 	}
-	cmd := exec.Command("./server", strconv.Itoa(config.DaemonServer.UserId), strconv.Itoa(server.MaxMemory),
-		"../servers/server"+strconv.Itoa(server.ID),
-		"../servers/server"+strconv.Itoa(server.ID)+"/serverData", execConf.Command)
+	server.MaxMemory = 1024
+	cmd := exec.Command("./server", "-uid=" + strconv.Itoa(config.DaemonServer.UserId),
+		"-mem="+strconv.Itoa(server.MaxMemory),
+		"-chr="+"../servers/server"+strconv.Itoa(server.ID),
+		 "-cmd="+execConf.Command)
 	err := cmd.Start()
+	if err != nil {
+		return err
+	}
 	stdinPipe, _ := cmd.StdinPipe()
 	stdoutPipe, _ := cmd.StdoutPipe()
 	servers = append(servers, ServerRun{
@@ -39,13 +44,18 @@ func (server *ServerLocal) Start() error {
 		stdoutPipe,
 		OutputInfo{false, nil},
 	})
-	//go servers[len(servers)-1].ProcessOutput()
-	return err
+
+	go servers[len(servers)-1].ProcessOutput()
+	return nil
 }
 
 func (serRun *ServerRun) ProcessOutput() {
+
 	buf := bufio.NewReader(serRun.Stdout)
 	for {
+		if serRun.Cmd.ProcessState.Exited(){
+			return
+		}
 		line, err := buf.ReadString('\n') //以'\n'为结束符读入一行
 		if err != nil || io.EOF == err {
 			break

@@ -11,15 +11,15 @@ import (
 
 // 按照错误码准备环境
 func (server *ServerLocal) EnvPrepare() error{
+	fmt.Printf("Preparing server runtime for ServerID:%d \n",server.ID)
 	serverDataDir := "../servers/server" + strconv.Itoa(server.ID) // 在一开头就把serverDir算好，增加代码重用
 	// 文件夹不存在则创建文件夹
 	autoMakeDir(serverDataDir + "/serverData")
-	// 得到执行conf
 
-	if _, err0 := os.Stat(serverDataDir + ".loop"); err0 != nil {
+	if _, err0 := os.Stat(serverDataDir + ".loop"); err0 != nil { //检查loop回环文件是否存在，如果不存在则创建
 		fmt.Println("No loop file found!")
 		//  新增 loop
-		cmd := exec.Command("/bin/dd", "if=/dev/zero", "bs=1024",
+		cmd := exec.Command("/bin/dd", "if=/dev/zero", "bs=1024",// MaxHardDisk单位kb
 			"count="+strconv.Itoa(server.MaxHardDisk), "of=../servers/server"+strconv.Itoa(server.ID)+".loop")
 		fmt.Print("Writing file...")
 		err := cmd.Run()
@@ -27,7 +27,7 @@ func (server *ServerLocal) EnvPrepare() error{
 			return err
 		}
 		fmt.Println("Done")
-
+		// 用mkfs格式化
 		fmt.Println("Formatting...")
 		cmd2 := exec.Command("/sbin/mkfs.ext4", serverDataDir+"/server" + strconv.Itoa(server.ID) + ".loop")
 		err2 := cmd2.Run()
@@ -39,23 +39,26 @@ func (server *ServerLocal) EnvPrepare() error{
 
 	}
 	fmt.Println("Preparing server data dir.")
-
+	// 为挂载文件夹做好准备
 	autoMakeDir(serverDataDir + "/lib")
 	if _, err := os.Stat("/lib64"); err == nil { // 32位系统貌似没有lib64,那就不新建了
 		autoMakeDir(serverDataDir + "/lib64")
 		// 这个谁说的准？ 哈哈～
 	}
+	// 挂载回环文件
 	cmd := exec.Command("/bin/mount", "-o", "loop",serverDataDir+"/server" + strconv.Itoa(server.ID) + ".loop", serverDataDir)
 	cmd.Run()
 
-	server.mountDirs()
-	/////////////////////////////////////////////////////////////////
+	err := server.mountDirs() // 挂载其他文件
+	if err != nil {
+		fmt.Println("[ERROR]" + err.Error())
+	}
 	return nil
 }
 
 func (server *ServerLocal) loadExecutableConfig() (ExecConf, error) {
 	var newServerRuntimeConf ExecConf
-	b, err := ioutil.ReadFile("../exec/" + server.Executable + ".json") // 将配置文件读入
+	b, err := ioutil.ReadFile("../exec/ping.json") // 将配置文件读入
 	if err != nil {
 		// 若在读文件时就有异常则停止反序列化
 		return newServerRuntimeConf, err
@@ -70,6 +73,7 @@ func (server *ServerLocal) loadExecutableConfig() (ExecConf, error) {
 func (server *ServerLocal) mountDirs() error {
 	serverDataDir := "../servers/server" + strconv.Itoa(server.ID) // 在一开头就把serverDir算好，增加代码重用
 	execConfig, err := server.loadExecutableConfig()
+	fmt.Println(execConfig)
 	if err != nil {
 		return err
 	}
@@ -111,6 +115,7 @@ func mountDirs(dirs []string, serverDataDir string) {
 }
 
 func mountDir(dir, serverDataDir string) {
+	fmt.Printf("Mounting Dir:%s",dir)
 	autoMakeDir(serverDataDir + dir)
 	cmd := exec.Command("/bin/mount", "-o", "bind", dir, serverDataDir+dir)
 	cmd.Run()

@@ -8,7 +8,7 @@
 		"VerifyCode": "987IsA1MWIa68yQcvMfy",
 		"DefaultBufLength": 256,
 		"ValidationKeyOutDateTimeSeconds": 20,
-		"UserId": 1000
+		"UserId": 1001
 	},
 	"FileTransportServer": {
 		"Port": 52025

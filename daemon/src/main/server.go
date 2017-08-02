@@ -23,13 +23,11 @@ func main() {
 		mem     int64
 		command string // command: ping www.baidu.com
 		chroot  string // eg : ./server0
-		mounts  string // json mount
 	)
 	flag.IntVar(&uid, "uid", 0, "uid for setuid command")
 	flag.Int64Var(&mem, "mem", 1024, "mem (m) for rlimit")
 	flag.StringVar(&command, "cmd", "", "Command to be run")
 	flag.StringVar(&chroot, "chr", "", "Chroot jail for pro") // 申明并解析参数
-	flag.StringVar(&mounts, "mnts", "", "Mounts dirpath")
 	flag.Parse()
 	usrCur, _ := user.Current()
 	fmt.Printf("User name %s", usrCur.Uid)
