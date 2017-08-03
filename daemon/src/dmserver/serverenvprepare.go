@@ -7,6 +7,7 @@ import (
 	"os"
 	"os/exec"
 	"strconv"
+	"path/filepath"
 )
 
 // 按照错误码准备环境
@@ -19,6 +20,9 @@ func (server *ServerLocal) EnvPrepare() error{
 	if _, err0 := os.Stat(serverDataDir + ".loop"); err0 != nil { //检查loop回环文件是否存在，如果不存在则创建
 		fmt.Println("No loop file found!")
 		//  新增 loop
+		if server.MaxHardDisk == 0 {
+			server.MaxHardDisk = 10240
+		}
 		cmd := exec.Command("/bin/dd", "if=/dev/zero", "bs=1024",// MaxHardDisk单位kb
 			"count="+strconv.Itoa(server.MaxHardDisk), "of=../servers/server"+strconv.Itoa(server.ID)+".loop")
 		fmt.Print("Writing file...")
@@ -41,6 +45,10 @@ func (server *ServerLocal) EnvPrepare() error{
 	fmt.Println("Preparing server data dir.")
 	// 为挂载文件夹做好准备
 	autoMakeDir(serverDataDir + "/lib")
+	autoMakeDir(serverDataDir + "/execPath")
+	execPath,_ := filepath.Abs("../exec")
+	cmd2 := exec.Command("/bin/mount","-o","bind",execPath,serverDataDir + "/execPath")
+	cmd2.Run()
 	if _, err := os.Stat("/lib64"); err == nil { // 32位系统貌似没有lib64,那就不新建了
 		autoMakeDir(serverDataDir + "/lib64")
 		// 这个谁说的准？ 哈哈～
@@ -54,12 +62,19 @@ func (server *ServerLocal) EnvPrepare() error{
 	if err != nil {
 		fmt.Println("[ERROR]" + err.Error())
 	}
+	// 挂载结束
+	///////////////////////////////////////////////////////////
+	// Cgroups配置
+	// 新建Groups
+	autoMakeDir("/sys/fs/cgroups/cpuset/" + strconv(server.ID))
+	autoMakeDir("/sys/fs/cgroups/memory/" + strconv(server.ID))
+	cmdEchoCpuset := exec.Command("/bin/echo","")
 	return nil
 }
 
 func (server *ServerLocal) loadExecutableConfig() (ExecConf, error) {
 	var newServerRuntimeConf ExecConf
-	b, err := ioutil.ReadFile("../exec/ping.json") // 将配置文件读入
+	b, err := ioutil.ReadFile("../exec/" + server.Executable + ".json") // 将配置文件读入
 	if err != nil {
 		// 若在读文件时就有异常则停止反序列化
 		return newServerRuntimeConf, err
@@ -80,6 +95,8 @@ func (server *ServerLocal) mountDirs() error {
 	}
 	cmd := exec.Command("/bin/mount", "-o", "bind", "/lib", serverDataDir+"/lib")
 	cmd.Run()
+	cmdMountBin := exec.Command("/bin/mount","-o","bind","/bin",serverDataDir + "/bin")
+	cmdMountBin.Run() // 在这一版本中，将会强制挂载bin目录
 	if _, err := os.Stat("/lib64"); err == nil {
 		// 这里不用serverDataDir是处于安全考虑，万一小天才给我在../新建了一个lib64 那我把没有的lib64挂载过来就纯属多此一举了
 		cmd := exec.Command("/bin/mount", "-o", "bind", "/lib64", serverDataDir+"/lib64")

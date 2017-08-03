@@ -26,7 +26,6 @@ func (server *ServerLocal) Start() error {
 	if err0 != nil {
 		return err0
 	}
-	server.MaxMemory = 1024
 	cmd := exec.Command("./server", "-uid="+strconv.Itoa(config.DaemonServer.UserId), "-mem="+strconv.Itoa(server.MaxMemory), "-chr="+"../servers/server"+strconv.Itoa(server.ID), "-cmd="+execConf.Command)
 
 	stdoutPipe, err := cmd.StdoutPipe()
@@ -42,6 +41,7 @@ func (server *ServerLocal) Start() error {
 	servers = append(servers,ServerRun{
 		server.ID,
 		OutputInfo{false,nil},
+		nil,
 		cmd,
 		&stdinPipe,
 		&stdoutPipe,
@@ -57,17 +57,20 @@ func (server *ServerLocal) Start() error {
 func (s *ServerRun)ProcessOutput() {
 	fmt.Println(s.Cmd.Process.Pid)
 	buf := bufio.NewReader(*s.StdoutPipe)
+
 	for {
 		line, err := buf.ReadBytes('\n') //以'\n'为结束符读入一行
 		if err != nil || io.EOF == err {
 			break
 		}
-		fmt.Printf("%s",line)
+		//fmt.Printf("%s",line)
 		//s.processOutputLine(string(line)) // string对与正则更加友好吧
 		s.ToOutput.IsOutput = true
 		if s.ToOutput.IsOutput{
 			s.ToOutput.To = make(chan []byte,100)
-			s.ToOutput.To <- line
+			go func (){
+				s.ToOutput.To <- line
+			}()
 		}
 	}
 

@@ -164,7 +164,7 @@ class FrozenGo
      */
     public function getServerConfig($id)
     {
-        $result = $this->SockResult("GetConfig", $id);
+        $result = $this->SockResult("GetServerConfig", $id);
         $result->Message = json_decode($result->Message);
         return $result;
     }

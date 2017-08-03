@@ -18,3 +18,8 @@ func autoMakeDir(name string) {
 	cmd := exec.Command("mkdir", "-p", name)
 	cmd.Run()
 }
+func (s *ServerRun)testChannel(){
+	for {
+		fmt.Printf("%s",<-s.ToOutput.To)
+	}
+}

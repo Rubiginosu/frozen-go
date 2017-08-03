@@ -8,10 +8,17 @@ import (
 	"net"
 	"os"
 	"strconv"
+	"os/exec"
 )
 
 func StartDaemonServer(conf conf.Config) {
 	config = conf
+	os.MkdirAll("../.fgo_cgroups",700)
+	if _,err3 := os.Stat("/sys/fs/cgroups") ;err3 != nil {
+		autoMakeDir("/sys/fs/cgroups")
+		cmd := exec.Command("/bin/mount","-t","cgroups","cgroups","/sys/fs/cgroups")
+		cmd.Run()
+	}
 	go webskt()
 	b, _ := ioutil.ReadFile(config.ServerManager.Servers)
 	err2 := json.Unmarshal(b, &serverSaved)

@@ -39,6 +39,7 @@ type ExecConf struct {
 	PlayExitRegexp       string // 判定有人退出的表达式
 	StoppedServerCommand string // 服务器软退出指令
 	Mount                []string
+	ProcDir              bool // 需不需要特殊挂载proc 即在容器环境中，是否需要mount -t proc none /proc
 }
 
 type Module struct {
@@ -53,13 +54,15 @@ type ServerLocal struct {
 	Name        string
 	Executable  string
 	Status      int
-	MaxMemory   int // 内存限制
-	MaxHardDisk int
+	MaxCpuCores int // CPU核心数
+	MaxMem      int // 最大内存
+	MaxHardDisk int // 磁盘空间，开服时就必须设定好，以后不允许改变.
 }
 
 type ServerRun struct {
 	ID         int
 	ToOutput   OutputInfo
+	Players    []string
 	Cmd        *exec.Cmd
 	StdinPipe  *io.WriteCloser
 	StdoutPipe *io.ReadCloser

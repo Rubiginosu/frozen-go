@@ -1,4 +1,12 @@
 {
-	"Command": "id",
-	"Args": []
+	"Name": "ping",
+	"Command": "/usr/bin/java /execPath/Minecraft.jar",
+	"StartServerRegexp": "",
+	"NewPlayerJoinRegexp": "",
+	"PlayExitRegexp": "",
+	"StoppedServerCommand": "",
+	"Mount": [
+		"/usr",
+		"/etc"
+	]
 }

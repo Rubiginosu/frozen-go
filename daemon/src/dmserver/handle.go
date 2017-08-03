@@ -194,25 +194,25 @@ func handleRequest(request Request) Response {
 }
 
 func setServerConfigAll(attrs []ServerAttrElement, index int) error {
-	for i := 0; i < len(attrs); i++ {
-		switch attrs[i].AttrName {
-		case "MaxMemory":
-			mem, err := strconv.Atoi(attrs[i].AttrValue)
-			if err != nil {
-				return err
-			}
-			serverSaved[index].MaxMemory = mem
-		case "Executable":
-			serverSaved[index].Executable = attrs[i].AttrValue
-		case "MaxHardDisk":
-			disk, err := strconv.Atoi(attrs[i].AttrValue)
-			if err != nil {
-				return err
-			}
-			serverSaved[index].MaxHardDisk = disk
-		case "Name":
-			serverSaved[index].Name = attrs[i].AttrValue
-		}
-	}
-	return nil
+	//for i := 0; i < len(attrs); i++ {
+	//	switch attrs[i].AttrName {
+	//	case "MaxMemory":
+	//		mem, err := strconv.Atoi(attrs[i].AttrValue)
+	//		if err != nil {
+	//			return err
+	//		}
+	//		serverSaved[index].MaxMemory = mem
+	//	case "Executable":
+	//		serverSaved[index].Executable = attrs[i].AttrValue
+	//	case "MaxHardDisk":
+	//		disk, err := strconv.Atoi(attrs[i].AttrValue)
+	//		if err != nil {
+	//			return err
+	//		}
+	//		serverSaved[index].MaxHardDisk = disk
+	//	case "Name":
+	//		serverSaved[index].Name = attrs[i].AttrValue
+	//	}
+	//}
+	//return nil
 }
